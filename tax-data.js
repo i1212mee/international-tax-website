@@ -123,6 +123,60 @@ const TAX_DATA = {
                 ]
             }
         },
+        "HK": {
+            name: "Hong Kong, China",
+            vat: { standard: null, note: "No VAT/GST in Hong Kong" },
+            gst: { standard: null, note: "No VAT/GST in Hong Kong" },
+            incomeTax: {
+                tiers: [
+                    { rate: "16.5%", type: "corporate", label: "Corporate Tax (Profits Tax)", note: "First HKD 2M at 8.25%, remainder at 16.5%" },
+                    { rate: "15%", type: "individual", label: "Salaries Tax (Standard)", note: "Max 15% on net income" },
+                    { rate: "2-17%", type: "individual-progressive", label: "Salaries Tax (Progressive)", note: "Progressive rates on net income" }
+                ]
+            },
+            businessTax: {
+                tiers: [
+                    { rate: "16.5%", type: "standard", label: "Profits Tax", note: "Same as corporate tax" }
+                ]
+            }
+        },
+        "MO": {
+            name: "Macao, China",
+            vat: { standard: null, note: "No VAT/GST in Macao" },
+            gst: { standard: null, note: "No VAT/GST in Macao" },
+            incomeTax: {
+                tiers: [
+                    { rate: "12%", type: "corporate", label: "Corporate Tax (Complementary Tax)", note: "Standard rate, max 12%" },
+                    { rate: "0-12%", type: "individual", label: "Professional Tax", note: "Progressive rates on employment income" }
+                ]
+            },
+            businessTax: {
+                tiers: [
+                    { rate: "0-5%", type: "standard", label: "Industrial Tax", note: "Varies by business type" }
+                ]
+            }
+        },
+        "TW": {
+            name: "Taiwan, China",
+            vat: {
+                tiers: [
+                    { rate: "5%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
+                    { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
+                ],
+                note: "Business Tax"
+            },
+            incomeTax: {
+                tiers: [
+                    { rate: "20%", type: "corporate", label: "Corporate Tax", note: "Standard rate" },
+                    { rate: "5-40%", type: "individual", label: "Individual Tax", note: "Progressive rates" }
+                ]
+            },
+            businessTax: {
+                tiers: [
+                    { rate: "5%", type: "standard", label: "Business Tax", note: "VAT equivalent" }
+                ]
+            }
+        },
         "JP": {
             name: "Japan",
             vat: {
@@ -1176,7 +1230,50 @@ const TAX_DATA = {
         "PH_TH_royalties": "10%",
         "PH_MY_dividends": "0%",
         "PH_MY_interest": "10%",
-        "PH_MY_royalties": "10%"
+        "PH_MY_royalties": "10%",
+
+        // Hong Kong as payer
+        "HK_CN_dividends": "5%",
+        "HK_CN_interest": "7%",
+        "HK_CN_royalties": "7%",
+        "HK_JP_dividends": "0%",
+        "HK_JP_interest": "10%",
+        "HK_JP_royalties": "5%",
+        "HK_KR_dividends": "10%",
+        "HK_KR_interest": "10%",
+        "HK_KR_royalties": "10%",
+        "HK_SG_dividends": "0%",
+        "HK_SG_interest": "15%",
+        "HK_SG_royalties": "10%",
+        "HK_MY_dividends": "0%",
+        "HK_MY_interest": "10%",
+        "HK_MY_royalties": "8%",
+        "HK_TH_dividends": "10%",
+        "HK_TH_interest": "10%",
+        "HK_TH_royalties": "5%",
+        "HK_IN_dividends": "5%",
+        "HK_IN_interest": "10%",
+        "HK_IN_royalties": "10%",
+        "HK_GB_dividends": "0%",
+        "HK_GB_interest": "0%",
+        "HK_GB_royalties": "2.5%",
+        "HK_US_dividends": "0%",
+        "HK_US_interest": "0%",
+        "HK_US_royalties": "0%",
+        "HK_AU_dividends": "5%",
+        "HK_AU_interest": "10%",
+        "HK_AU_royalties": "5%",
+        "HK_NZ_dividends": "15%",
+        "HK_NZ_interest": "10%",
+        "HK_NZ_royalties": "10%",
+
+        // Macao as payer
+        "MO_CN_dividends": "10%",
+        "MO_CN_interest": "10%",
+        "MO_CN_royalties": "10%",
+        "MO_PT_dividends": "5%",
+        "MO_PT_interest": "10%",
+        "MO_PT_royalties": "5%"
     }
 };
 
