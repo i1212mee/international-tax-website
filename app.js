@@ -232,10 +232,14 @@ function hideLoading() {
 async function queryNationalTax() {
     const countryCode = document.getElementById('country-select').value;
     const transactionType = document.getElementById('transaction-type').value;
-    const scenario = document.getElementById('transaction-scenario').value;
 
-    if (!countryCode || !transactionType) {
-        alert('Please select both country and transaction type.');
+    if (!countryCode) {
+        alert('Please select a country/region.');
+        return;
+    }
+    
+    if (!transactionType) {
+        alert('Please select a transaction type.');
         return;
     }
 
@@ -254,7 +258,7 @@ async function queryNationalTax() {
         const webResults = await searchWebRates(searchQuery);
 
         // Display results
-        displayNationalTaxResults(countryName, countryCode, transactionType, scenario, baseData, webResults);
+        displayNationalTaxResults(countryName, countryCode, transactionType, baseData, webResults);
     } catch (error) {
         console.error('Error querying national tax:', error);
         alert('Error querying tax rates. Please try again.');
@@ -264,7 +268,7 @@ async function queryNationalTax() {
 }
 
 // Display National Tax Results
-function displayNationalTaxResults(countryName, countryCode, transactionType, scenario, baseData, webResults) {
+function displayNationalTaxResults(countryName, countryCode, transactionType, baseData, webResults) {
     const resultsContainer = document.getElementById('national-tax-results');
     const contentDiv = document.getElementById('national-tax-content');
 
@@ -275,42 +279,103 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, sc
         switch(transactionType) {
             case 'vat':
             case 'gst':
-                const taxInfo = baseData.vat || baseData.gst;
+                const taxInfo = baseData.vat || baseData.gst || baseData.sst;
                 if (taxInfo) {
-                    const rate = scenario === 'standard' ? taxInfo.standard :
-                                scenario === 'reduced' ? (taxInfo.reduced || taxInfo.standard) :
-                                scenario === 'zero' ? '0%' :
-                                scenario === 'exempt' ? 'Exempt' :
-                                taxInfo.standard;
                     html += `<div class="tax-type">${transactionType.toUpperCase()}</div>`;
-                    html += `<div class="rate-value">${rate}</div>`;
+                    
+                    // Check if it has tiers (new format)
+                    if (taxInfo.tiers && taxInfo.tiers.length > 0) {
+                        html += `<div class="all-rates-container">`;
+                        taxInfo.tiers.forEach(tier => {
+                            const tierClass = tier.type || 'standard';
+                            html += `<div class="rate-tier ${tierClass}">`;
+                            html += `<div class="tier-info">`;
+                            html += `<span class="tier-label">${tier.label}</span>`;
+                            if (tier.note) {
+                                html += `<span class="tier-note">${tier.note}</span>`;
+                            }
+                            html += `</div>`;
+                            html += `<span class="tier-rate">${tier.rate}</span>`;
+                            html += `</div>`;
+                        });
+                        html += `</div>`;
+                    } else {
+                        // Old format fallback
+                        html += `<div class="rate-value">${taxInfo.standard || 'N/A'}</div>`;
+                    }
+                    
                     if (taxInfo.note) {
                         html += `<div class="rate-label">${taxInfo.note}</div>`;
                     }
+                } else {
+                    html += `<div class="alert alert-warning">No ${transactionType.toUpperCase()} data available for this country.</div>`;
                 }
                 break;
 
             case 'income-tax':
                 if (baseData.incomeTax) {
-                    const incTax = baseData.incomeTax;
                     html += `<div class="tax-type">Income Tax</div>`;
-                    html += `<div class="rate-value" style="font-size: 1.5em;">`;
-                    html += `Corporate: ${incTax.corporate?.standard || 'N/A'}<br>`;
-                    html += `Individual: ${incTax.individual?.standard || 'N/A'}`;
-                    html += `</div>`;
-                    if (incTax.corporate?.note) {
-                        html += `<div class="rate-label">${incTax.corporate.note}</div>`;
+                    
+                    // Check if it has tiers (new format)
+                    if (baseData.incomeTax.tiers && baseData.incomeTax.tiers.length > 0) {
+                        html += `<div class="all-rates-container">`;
+                        baseData.incomeTax.tiers.forEach(tier => {
+                            const tierClass = tier.type || 'standard';
+                            html += `<div class="rate-tier ${tierClass}">`;
+                            html += `<div class="tier-info">`;
+                            html += `<span class="tier-label">${tier.label}</span>`;
+                            if (tier.note) {
+                                html += `<span class="tier-note">${tier.note}</span>`;
+                            }
+                            html += `</div>`;
+                            html += `<span class="tier-rate">${tier.rate}</span>`;
+                            html += `</div>`;
+                        });
+                        html += `</div>`;
+                    } else {
+                        // Old format fallback
+                        html += `<div class="rate-value" style="font-size: 1.5em;">`;
+                        html += `Corporate: ${baseData.incomeTax.corporate?.standard || 'N/A'}<br>`;
+                        html += `Individual: ${baseData.incomeTax.individual?.standard || 'N/A'}`;
+                        html += `</div>`;
+                        if (baseData.incomeTax.corporate?.note) {
+                            html += `<div class="rate-label">${baseData.incomeTax.corporate.note}</div>`;
+                        }
                     }
+                } else {
+                    html += `<div class="alert alert-warning">No Income Tax data available for this country.</div>`;
                 }
                 break;
 
             case 'business-tax':
                 if (baseData.businessTax) {
                     html += `<div class="tax-type">Business Tax</div>`;
-                    html += `<div class="rate-value">${baseData.businessTax.standard || 'N/A'}</div>`;
+                    
+                    // Check if it has tiers (new format)
+                    if (baseData.businessTax.tiers && baseData.businessTax.tiers.length > 0) {
+                        html += `<div class="all-rates-container">`;
+                        baseData.businessTax.tiers.forEach(tier => {
+                            const tierClass = tier.type || 'standard';
+                            html += `<div class="rate-tier ${tierClass}">`;
+                            html += `<div class="tier-info">`;
+                            html += `<span class="tier-label">${tier.label}</span>`;
+                            if (tier.note) {
+                                html += `<span class="tier-note">${tier.note}</span>`;
+                            }
+                            html += `</div>`;
+                            html += `<span class="tier-rate">${tier.rate}</span>`;
+                            html += `</div>`;
+                        });
+                        html += `</div>`;
+                    } else {
+                        html += `<div class="rate-value">${baseData.businessTax.standard || 'N/A'}</div>`;
+                    }
+                    
                     if (baseData.businessTax.note) {
                         html += `<div class="rate-label">${baseData.businessTax.note}</div>`;
                     }
+                } else {
+                    html += `<div class="alert alert-warning">No Business Tax data available for this country.</div>`;
                 }
                 break;
         }
