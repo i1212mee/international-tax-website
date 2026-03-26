@@ -708,6 +708,10 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
 
     let html = `<div class="tax-result-card">`;
     html += `<div class="country-name">${countryName}</div>`;
+    
+    // Check if we have real-time extracted data from PwC
+    const hasRealTimeData = webResults && webResults.results && webResults.results.some(r => r.extractedData);
+    const extractedData = hasRealTimeData ? webResults.results.find(r => r.extractedData)?.extractedData : null;
 
     if (baseData) {
         switch(transactionType) {
@@ -750,6 +754,14 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
                 if (taxInfo) {
                     html += `<div class="tax-type">${taxDisplayName}</div>`;
                     
+                    // If we have real-time extracted VAT/GST rate, show it first
+                    if (extractedData && extractedData.vat) {
+                        html += `<div class="real-time-indicator">
+                            <span class="live-badge">● LIVE</span>
+                            <span class="real-time-rate">Real-time rate from PwC: <strong>${extractedData.vat}</strong></span>
+                        </div>`;
+                    }
+                    
                     // Check if it has tiers (new format)
                     if (taxInfo.tiers && taxInfo.tiers.length > 0) {
                         html += `<div class="all-rates-container">`;
@@ -774,6 +786,11 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
                     if (taxInfo.note) {
                         html += `<div class="rate-label">${taxInfo.note}</div>`;
                     }
+                    
+                    // Add disclaimer about local data
+                    html += `<div class="data-disclaimer">
+                        <small>Local database data shown above. Please verify with official sources below for the most current rates.</small>
+                    </div>`;
                 } else {
                     html += `<div class="alert alert-warning">No turnover tax data available for this country.</div>`;
                 }

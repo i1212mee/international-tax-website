@@ -330,23 +330,82 @@ async function fetchNationalTaxFromPwC(query, type) {
 function parseTaxRates(html, type) {
     const rates = {};
     
-    // Extract CIT rate
-    const citMatch = html.match(/Headline CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
-    if (citMatch) {
-        rates.cit = citMatch[1] + '%';
+    // Clean HTML entities
+    const cleanText = html.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+    
+    // Extract CIT rate - multiple patterns
+    const citPatterns = [
+        /Headline CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Corporate income tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Standard corporate tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
+    ];
+    for (const pattern of citPatterns) {
+        const match = cleanText.match(pattern);
+        if (match) {
+            rates.cit = match[1] + '%';
+            break;
+        }
     }
     
-    // Extract PIT rate
-    const pitMatch = html.match(/Headline PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
-    if (pitMatch) {
-        rates.pit = pitMatch[1] + '%';
+    // Extract PIT rate - multiple patterns
+    const pitPatterns = [
+        /Headline PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Personal income tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Top marginal rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Maximum PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
+    ];
+    for (const pattern of pitPatterns) {
+        const match = cleanText.match(pattern);
+        if (match) {
+            rates.pit = match[1] + '%';
+            break;
+        }
     }
     
-    // Extract VAT/GST rate
-    const vatMatch = html.match(/Standard VAT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i) ||
-                     html.match(/Standard GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
-    if (vatMatch) {
-        rates.vat = vatMatch[1] + '%';
+    // Extract VAT/GST/SST rate - multiple patterns for different tax types
+    const vatPatterns = [
+        /Standard VAT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Standard GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /VAT standard rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Standard rate[^<]*VAT[^<]*(\d+(?:\.\d+)?)\s*%?/i
+    ];
+    for (const pattern of vatPatterns) {
+        const match = cleanText.match(pattern);
+        if (match) {
+            rates.vat = match[1] + '%';
+            break;
+        }
+    }
+    
+    // Extract SST (Sales and Service Tax) for Malaysia and similar
+    const sstPatterns = [
+        /Sales tax[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /Service tax[^<]*(\d+(?:\.\d+)?)\s*%?/i,
+        /SST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
+    ];
+    const sstRates = [];
+    for (const pattern of sstPatterns) {
+        const match = cleanText.match(pattern);
+        if (match) {
+            sstRates.push(match[1] + '%');
+        }
+    }
+    if (sstRates.length > 0) {
+        rates.sst = sstRates.join(' / ');
+    }
+    
+    // Try to extract all rate tiers from tables
+    const tierMatches = cleanText.matchAll(/(\d+(?:\.\d+)?)\s*%\s*([A-Za-z\s]+)/g);
+    const allTiers = [];
+    for (const match of tierMatches) {
+        if (match[1] && match[2]) {
+            allTiers.push({ rate: match[1] + '%', type: match[2].trim() });
+        }
+    }
+    if (allTiers.length > 0 && !rates.vat) {
+        rates.tiers = allTiers.slice(0, 5); // Limit to 5 tiers
     }
     
     return Object.keys(rates).length > 0 ? rates : null;
