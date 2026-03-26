@@ -1,11 +1,18 @@
 // Main Application Logic
 
+// Storage keys
+const STORAGE_KEYS = {
+    HISTORY: 'taxQueryHistory',
+    BOOKMARKS: 'taxQueryBookmarks'
+};
+
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeCountryDropdowns();
     initializeBatchCountryCheckboxes();
     initializeTabs();
     initializeEventListeners();
+    initializeHistoryAndBookmarks();
 });
 
 // Initialize country dropdowns with autocomplete
@@ -216,6 +223,344 @@ function initializeEventListeners() {
 
     // Batch withholding tax query
     document.getElementById('query-batch-withholding-tax').addEventListener('click', queryBatchWithholdingTax);
+
+    // History and bookmarks toggles
+    document.getElementById('toggle-history').addEventListener('click', toggleHistoryPanel);
+    document.getElementById('toggle-bookmarks').addEventListener('click', toggleBookmarksPanel);
+    document.getElementById('clear-history').addEventListener('click', clearHistory);
+    document.getElementById('clear-bookmarks').addEventListener('click', clearBookmarks);
+}
+
+// Initialize history and bookmarks
+function initializeHistoryAndBookmarks() {
+    updateHistoryCount();
+    updateBookmarkCount();
+}
+
+// Toggle history panel
+function toggleHistoryPanel() {
+    const panel = document.getElementById('history-panel');
+    const btn = document.getElementById('toggle-history');
+    const bookmarksPanel = document.getElementById('bookmarks-panel');
+    const bookmarksBtn = document.getElementById('toggle-bookmarks');
+    
+    // Close bookmarks panel if open
+    if (bookmarksPanel.style.display !== 'none') {
+        bookmarksPanel.style.display = 'none';
+        bookmarksBtn.classList.remove('active');
+    }
+    
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.classList.add('active');
+        renderHistoryList();
+    } else {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+    }
+}
+
+// Toggle bookmarks panel
+function toggleBookmarksPanel() {
+    const panel = document.getElementById('bookmarks-panel');
+    const btn = document.getElementById('toggle-bookmarks');
+    const historyPanel = document.getElementById('history-panel');
+    const historyBtn = document.getElementById('toggle-history');
+    
+    // Close history panel if open
+    if (historyPanel.style.display !== 'none') {
+        historyPanel.style.display = 'none';
+        historyBtn.classList.remove('active');
+    }
+    
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        btn.classList.add('active');
+        renderBookmarksList();
+    } else {
+        panel.style.display = 'none';
+        btn.classList.remove('active');
+    }
+}
+
+// Get history from localStorage
+function getHistory() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY)) || [];
+    } catch {
+        return [];
+    }
+}
+
+// Save history to localStorage
+function saveHistory(history) {
+    localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
+    updateHistoryCount();
+}
+
+// Add to history
+function addToHistory(query) {
+    const history = getHistory();
+    const historyItem = {
+        id: Date.now(),
+        ...query,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Add to beginning, limit to 50 items
+    history.unshift(historyItem);
+    if (history.length > 50) history.pop();
+    
+    saveHistory(history);
+}
+
+// Update history count
+function updateHistoryCount() {
+    const history = getHistory();
+    document.getElementById('history-count').textContent = history.length;
+}
+
+// Render history list
+function renderHistoryList() {
+    const container = document.getElementById('history-list');
+    const history = getHistory();
+    
+    if (history.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">📜</div>
+                <p>No query history yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    history.forEach(item => {
+        const date = new Date(item.timestamp);
+        const timeStr = date.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const isBookmarked = isItemBookmarked(item);
+        
+        html += `
+            <div class="history-item">
+                <div class="item-info" onclick="replayHistoryItem(${item.id})">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-meta">${timeStr}</div>
+                </div>
+                <div class="item-actions">
+                    <button class="item-btn bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" 
+                            onclick="toggleBookmark(${item.id})" title="${isBookmarked ? 'Remove bookmark' : 'Add bookmark'}">
+                        ${isBookmarked ? '★' : '☆'}
+                    </button>
+                    <button class="item-btn delete-btn" onclick="deleteHistoryItem(${item.id})" title="Delete">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Replay history item
+function replayHistoryItem(id) {
+    const history = getHistory();
+    const item = history.find(h => h.id === id);
+    
+    if (!item) return;
+    
+    // Close panel
+    document.getElementById('history-panel').style.display = 'none';
+    document.getElementById('toggle-history').classList.remove('active');
+    
+    // Replay the query based on type
+    if (item.type === 'national') {
+        document.getElementById('country-input').value = item.countryName;
+        document.getElementById('country-select').value = item.countryCode;
+        document.getElementById('transaction-type').value = item.transactionType;
+        queryNationalTax();
+    } else if (item.type === 'wht') {
+        document.getElementById('payer-input').value = item.payerName;
+        document.getElementById('payer-country').value = item.payerCode;
+        document.getElementById('payee-input').value = item.payeeName;
+        document.getElementById('payee-country').value = item.payeeCode;
+        document.getElementById('payment-type').value = item.paymentType;
+        queryWithholdingTax();
+    } else if (item.type === 'batch') {
+        document.getElementById('batch-payer-input').value = item.payerName;
+        document.getElementById('batch-payer-country').value = item.payerCode;
+        document.getElementById('batch-payment-type').value = item.paymentType;
+        
+        // Select the payee countries
+        const checkboxes = document.querySelectorAll('#batch-payee-countries input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = item.payeeCodes.includes(cb.value);
+        });
+        
+        queryBatchWithholdingTax();
+    }
+}
+
+// Delete history item
+function deleteHistoryItem(id) {
+    const history = getHistory().filter(h => h.id !== id);
+    saveHistory(history);
+    renderHistoryList();
+}
+
+// Clear all history
+function clearHistory() {
+    if (confirm('Are you sure you want to clear all query history?')) {
+        localStorage.removeItem(STORAGE_KEYS.HISTORY);
+        updateHistoryCount();
+        renderHistoryList();
+    }
+}
+
+// Get bookmarks from localStorage
+function getBookmarks() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.BOOKMARKS)) || [];
+    } catch {
+        return [];
+    }
+}
+
+// Save bookmarks to localStorage
+function saveBookmarks(bookmarks) {
+    localStorage.setItem(STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
+    updateBookmarkCount();
+}
+
+// Check if item is bookmarked
+function isItemBookmarked(item) {
+    const bookmarks = getBookmarks();
+    return bookmarks.some(b => b.title === item.title);
+}
+
+// Toggle bookmark
+function toggleBookmark(historyId) {
+    const history = getHistory();
+    const item = history.find(h => h.id === historyId);
+    
+    if (!item) return;
+    
+    const bookmarks = getBookmarks();
+    const existingIndex = bookmarks.findIndex(b => b.title === item.title);
+    
+    if (existingIndex >= 0) {
+        bookmarks.splice(existingIndex, 1);
+    } else {
+        bookmarks.push({
+            id: Date.now(),
+            ...item
+        });
+    }
+    
+    saveBookmarks(bookmarks);
+    renderHistoryList();
+}
+
+// Update bookmark count
+function updateBookmarkCount() {
+    const bookmarks = getBookmarks();
+    document.getElementById('bookmark-count').textContent = bookmarks.length;
+}
+
+// Render bookmarks list
+function renderBookmarksList() {
+    const container = document.getElementById('bookmarks-list');
+    const bookmarks = getBookmarks();
+    
+    if (bookmarks.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">⭐</div>
+                <p>No bookmarks yet. Click ☆ to bookmark a query.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    bookmarks.forEach(item => {
+        html += `
+            <div class="bookmark-item">
+                <div class="item-info" onclick="replayBookmark(${item.id})">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-meta">${item.type.toUpperCase()}</div>
+                </div>
+                <div class="item-actions">
+                    <button class="item-btn delete-btn" onclick="deleteBookmark(${item.id})" title="Remove bookmark">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// Replay bookmark
+function replayBookmark(id) {
+    const bookmarks = getBookmarks();
+    const item = bookmarks.find(b => b.id === id);
+    
+    if (!item) return;
+    
+    // Close panel
+    document.getElementById('bookmarks-panel').style.display = 'none';
+    document.getElementById('toggle-bookmarks').classList.remove('active');
+    
+    // Replay the query
+    if (item.type === 'national') {
+        document.getElementById('country-input').value = item.countryName;
+        document.getElementById('country-select').value = item.countryCode;
+        document.getElementById('transaction-type').value = item.transactionType;
+        queryNationalTax();
+    } else if (item.type === 'wht') {
+        document.getElementById('payer-input').value = item.payerName;
+        document.getElementById('payer-country').value = item.payerCode;
+        document.getElementById('payee-input').value = item.payeeName;
+        document.getElementById('payee-country').value = item.payeeCode;
+        document.getElementById('payment-type').value = item.paymentType;
+        queryWithholdingTax();
+    } else if (item.type === 'batch') {
+        document.getElementById('batch-payer-input').value = item.payerName;
+        document.getElementById('batch-payer-country').value = item.payerCode;
+        document.getElementById('batch-payment-type').value = item.paymentType;
+        
+        const checkboxes = document.querySelectorAll('#batch-payee-countries input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            cb.checked = item.payeeCodes.includes(cb.value);
+        });
+        
+        queryBatchWithholdingTax();
+    }
+}
+
+// Delete bookmark
+function deleteBookmark(id) {
+    const bookmarks = getBookmarks().filter(b => b.id !== id);
+    saveBookmarks(bookmarks);
+    renderBookmarksList();
+}
+
+// Clear all bookmarks
+function clearBookmarks() {
+    if (confirm('Are you sure you want to clear all bookmarks?')) {
+        localStorage.removeItem(STORAGE_KEYS.BOOKMARKS);
+        updateBookmarkCount();
+        renderBookmarksList();
+    }
 }
 
 // Show loading overlay
@@ -300,6 +645,15 @@ async function queryNationalTax() {
         
         // Calculate search duration
         const searchDuration = Date.now() - searchStartTime;
+
+        // Add to history
+        addToHistory({
+            type: 'national',
+            title: `${countryName} - ${transactionType === 'turnover-tax' ? 'VAT/GST' : transactionType.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
+            countryCode,
+            countryName,
+            transactionType
+        });
 
         // Display results
         displayNationalTaxResults(countryName, countryCode, transactionType, actualTaxType, taxDisplayName, baseData, webResults, searchDuration);
@@ -507,6 +861,17 @@ async function queryWithholdingTax() {
         // Calculate search duration
         const searchDuration = Date.now() - searchStartTime;
 
+        // Add to history
+        addToHistory({
+            type: 'wht',
+            title: `WHT: ${payerName} → ${payeeName} (${paymentType})`,
+            payerCode: payerCountry,
+            payerName,
+            payeeCode: payeeCountry,
+            payeeName,
+            paymentType
+        });
+
         // Display results with cross-verification
         displayWithholdingTaxResults(
             payerName, payerCountry,
@@ -664,26 +1029,50 @@ async function queryBatchWithholdingTax() {
     try {
         const payerName = COUNTRIES.find(c => c.code === payerCountry)?.name || payerCountry;
 
+        // Check if bidirectional comparison is enabled
+        const bidirectionalEnabled = document.getElementById('bidirectional-comparison').checked;
+
         // Prepare results table
         const results = [];
 
         for (const payeeCode of payeeCountries) {
             const payeeName = COUNTRIES.find(c => c.code === payeeCode)?.name || payeeCode;
 
-            // Get treaty rate
+            // Get treaty rate (Payer → Payee)
             const treatyKey = `${payerCountry}_${payeeCode}_${paymentType}`;
             const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
 
-            results.push({
+            const result = {
                 payeeName,
                 payeeCode,
                 rate: treatyRate,
                 hasTreaty: !!TAX_DATA.withholding[treatyKey]
-            });
+            };
+
+            // If bidirectional, also get reverse rate
+            if (bidirectionalEnabled) {
+                const reverseTreatyKey = `${payeeCode}_${payerCountry}_${paymentType}`;
+                const reverseRate = TAX_DATA.withholding[reverseTreatyKey] || getDefaultWHTRate(paymentType);
+                result.reverseRate = reverseRate;
+                result.hasReverseTreaty = !!TAX_DATA.withholding[reverseTreatyKey];
+            }
+
+            results.push(result);
         }
 
+        // Add to history
+        addToHistory({
+            type: 'batch',
+            title: `Batch WHT: ${payerName} → ${payeeCountries.length} countries (${paymentType})`,
+            payerCode: payerCountry,
+            payerName,
+            payeeCodes: payeeCountries,
+            paymentType,
+            bidirectional: bidirectionalEnabled
+        });
+
         // Display batch results
-        displayBatchResults(payerName, payerCountry, paymentType, results);
+        displayBatchResults(payerName, payerCountry, paymentType, results, bidirectionalEnabled);
     } catch (error) {
         console.error('Error in batch query:', error);
         alert('Error in batch query. Please try again.');
@@ -693,7 +1082,7 @@ async function queryBatchWithholdingTax() {
 }
 
 // Display Batch Results
-function displayBatchResults(payerName, payerCode, paymentType, results) {
+function displayBatchResults(payerName, payerCode, paymentType, results, bidirectional = false) {
     const resultsContainer = document.getElementById('withholding-tax-results');
     const contentDiv = document.getElementById('withholding-tax-content');
     const sourceSection = document.getElementById('source-verification');
@@ -707,36 +1096,91 @@ function displayBatchResults(payerName, payerCode, paymentType, results) {
 
     let html = `
         <div class="alert alert-info" style="margin-bottom: 20px;">
-            <strong>Batch Comparison:</strong> Withholding tax rates from ${payerName} for ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)} payments
+            <strong>Batch Comparison:</strong> Withholding tax rates for ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)} payments
+            ${bidirectional ? ' (Bidirectional)' : ''}
         </div>
     `;
 
-    html += `<table class="batch-results-table">`;
-    html += `
-        <thead>
-            <tr>
-                <th>Payee Country</th>
-                <th>WHT Rate</th>
-                <th>Treaty Status</th>
-            </tr>
-        </thead>
-        <tbody>
-    `;
-
-    results.forEach(result => {
-        const badgeClass = result.hasTreaty ? 'badge-match' : 'badge-partial';
-        const badgeText = result.hasTreaty ? 'Treaty Rate' : 'Default Rate';
-
+    if (bidirectional) {
+        // Bidirectional table format
+        html += `<table class="bidirectional-table">`;
         html += `
-            <tr>
-                <td>${result.payeeName}</td>
-                <td class="rate-cell">${result.rate}</td>
-                <td><span class="comparison-badge ${badgeClass}">${badgeText}</span></td>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>${payerName} → Country</th>
+                    <th>Country → ${payerName}</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
         `;
-    });
 
-    html += `</tbody></table>`;
+        results.forEach(result => {
+            const forwardRate = result.rate;
+            const backwardRate = result.reverseRate;
+            
+            // Calculate difference
+            const forwardNum = parseFloat(forwardRate.replace(/[^0-9.]/g, '')) || 0;
+            const backwardNum = parseFloat(backwardRate.replace(/[^0-9.]/g, '')) || 0;
+            const diff = backwardNum - forwardNum;
+            const diffStr = diff > 0 ? `+${diff}%` : `${diff}%`;
+            
+            // Determine rate cell class
+            let forwardClass = 'rate-forward';
+            let backwardClass = 'rate-backward';
+            if (forwardNum === backwardNum) {
+                backwardClass = 'rate-same';
+            }
+
+            html += `
+                <tr>
+                    <td class="country-cell">${result.payeeName}</td>
+                    <td class="${forwardClass}">${forwardRate}</td>
+                    <td class="${backwardClass}">${backwardRate}</td>
+                    <td style="font-weight: 600; color: ${diff > 0 ? '#28a745' : diff < 0 ? '#dc3545' : '#6c757d'};">${diffStr}</td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+        
+        html += `
+            <div class="alert alert-info" style="margin-top: 15px;">
+                <strong>Legend:</strong>
+                <span style="margin-left: 15px; padding: 2px 8px; background: #d4edda; border-radius: 4px;">Green: ${payerName} → Payee</span>
+                <span style="margin-left: 10px; padding: 2px 8px; background: #cce5ff; border-radius: 4px;">Blue: Payee → ${payerName}</span>
+            </div>
+        `;
+    } else {
+        // Original single-direction table
+        html += `<table class="batch-results-table">`;
+        html += `
+            <thead>
+                <tr>
+                    <th>Payee Country</th>
+                    <th>WHT Rate</th>
+                    <th>Treaty Status</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+
+        results.forEach(result => {
+            const badgeClass = result.hasTreaty ? 'badge-match' : 'badge-partial';
+            const badgeText = result.hasTreaty ? 'Treaty Rate' : 'Default Rate';
+
+            html += `
+                <tr>
+                    <td>${result.payeeName}</td>
+                    <td class="rate-cell">${result.rate}</td>
+                    <td><span class="comparison-badge ${badgeClass}">${badgeText}</span></td>
+                </tr>
+            `;
+        });
+
+        html += `</tbody></table>`;
+    }
 
     html += `
         <div class="alert alert-warning" style="margin-top: 20px;">

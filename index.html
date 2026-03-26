@@ -14,6 +14,34 @@
         </header>
 
         <main>
+            <!-- History and Bookmarks Section -->
+            <div class="history-bookmarks-bar">
+                <button class="toggle-btn" id="toggle-history">
+                    <span class="icon">📜</span> History (<span id="history-count">0</span>)
+                </button>
+                <button class="toggle-btn" id="toggle-bookmarks">
+                    <span class="icon">⭐</span> Bookmarks (<span id="bookmark-count">0</span>)
+                </button>
+            </div>
+
+            <!-- History Panel -->
+            <div id="history-panel" class="side-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>Query History</h3>
+                    <button class="clear-btn" id="clear-history">Clear All</button>
+                </div>
+                <div id="history-list" class="panel-content"></div>
+            </div>
+
+            <!-- Bookmarks Panel -->
+            <div id="bookmarks-panel" class="side-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>Bookmarks</h3>
+                    <button class="clear-btn" id="clear-bookmarks">Clear All</button>
+                </div>
+                <div id="bookmarks-list" class="panel-content"></div>
+            </div>
+
             <!-- Parallel Layout: Two Sections Side by Side -->
             <div class="parallel-container">
                 <!-- National Tax Rates Section -->
@@ -127,6 +155,13 @@
                                     <input type="text" id="batch-country-filter" class="form-control" placeholder="Filter countries...">
                                 </div>
                                 <div id="batch-payee-countries" class="checkbox-grid"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="bidirectional-comparison" checked>
+                                    Enable Bidirectional Comparison (Payer↔Payee)
+                                </label>
                             </div>
 
                             <button id="query-batch-withholding-tax" class="btn btn-primary">Batch Query & Compare</button>
