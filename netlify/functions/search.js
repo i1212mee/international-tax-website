@@ -197,15 +197,31 @@ async function fetchNationalTaxFromPwC(query, type) {
     const results = [];
     const queryLower = query.toLowerCase();
     
-    // Extract country from query
+    // Extract country from query - prioritize longer matches first
     let countrySlug = null;
     let countryName = null;
     
-    for (const [key, slug] of Object.entries(PWC_COUNTRY_MAP)) {
-        if (queryLower.includes(key)) {
-            countrySlug = slug;
-            countryName = getCanonicalCountryName(key);
-            break;
+    // Sort keys by length (longest first) to avoid partial matches
+    // e.g., "indonesia" should match before "in" (India code)
+    const sortedKeys = Object.keys(PWC_COUNTRY_MAP).sort((a, b) => b.length - a.length);
+    
+    for (const key of sortedKeys) {
+        // Use word boundary matching for short codes
+        if (key.length <= 3) {
+            // For short codes like 'in', 'id', 'us', match as whole word
+            const regex = new RegExp(`\\b${key}\\b`, 'i');
+            if (regex.test(queryLower)) {
+                countrySlug = PWC_COUNTRY_MAP[key];
+                countryName = getCanonicalCountryName(key);
+                break;
+            }
+        } else {
+            // For longer names, use includes
+            if (queryLower.includes(key)) {
+                countrySlug = PWC_COUNTRY_MAP[key];
+                countryName = getCanonicalCountryName(key);
+                break;
+            }
         }
     }
     
@@ -326,19 +342,30 @@ async function fetchNationalTaxFromPwC(query, type) {
     return results;
 }
 
-// Parse tax rates from PwC page HTML
+// Parse tax rates from PwC page HTML - Enhanced version
 function parseTaxRates(html, type) {
     const rates = {};
     
-    // Clean HTML entities
-    const cleanText = html.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&');
+    // Remove HTML tags but keep text content
+    const cleanText = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\s+/g, ' ')
+        .trim();
     
-    // Extract CIT rate - multiple patterns
+    // Extract CIT (Corporate Income Tax) rate - multiple patterns
     const citPatterns = [
-        /Headline CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Corporate income tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Standard corporate tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
+        /Headline CIT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Corporate income tax rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Standard corporate tax rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /CIT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Corporate tax rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Corporate income tax[^0-9]*(\d+(?:\.\d+)?)\s*%/i
     ];
     for (const pattern of citPatterns) {
         const match = cleanText.match(pattern);
@@ -348,12 +375,14 @@ function parseTaxRates(html, type) {
         }
     }
     
-    // Extract PIT rate - multiple patterns
+    // Extract PIT (Personal Income Tax) rate - multiple patterns
     const pitPatterns = [
-        /Headline PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Personal income tax rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Top marginal rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Maximum PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
+        /Headline PIT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Personal income tax rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Top marginal rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Maximum PIT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Highest marginal rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Top personal tax rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i
     ];
     for (const pattern of pitPatterns) {
         const match = cleanText.match(pattern);
@@ -363,19 +392,73 @@ function parseTaxRates(html, type) {
         }
     }
     
-    // Extract VAT/GST/SST rate - multiple patterns for different tax types
+    // Extract VAT/GST rate - multiple patterns
     const vatPatterns = [
-        /Standard VAT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Standard GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /VAT standard rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Standard rate[^<]*VAT[^<]*(\d+(?:\.\d+)?)\s*%?/i
+        /Standard VAT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Standard GST rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /VAT standard rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /GST standard rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Standard rate.*?VAT[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Standard rate.*?GST[^0-9]*(\d+(?:\.\d+)?)\s*%/i
     ];
     for (const pattern of vatPatterns) {
         const match = cleanText.match(pattern);
         if (match) {
             rates.vat = match[1] + '%';
             break;
+        }
+    }
+    
+    // Extract SST (Sales and Service Tax) - Malaysia specific
+    const sstPatterns = [
+        /Sales tax[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Service tax[^0-9]*(\d+(?:\.\d+)?)\s*%/i
+    ];
+    const sstRates = [];
+    for (const pattern of sstPatterns) {
+        const matches = cleanText.matchAll(pattern);
+        for (const match of matches) {
+            if (match[1] && !sstRates.includes(match[1] + '%')) {
+                sstRates.push(match[1] + '%');
+            }
+        }
+    }
+    if (sstRates.length > 0) {
+        rates.sst = sstRates.slice(0, 4).join(' / ');
+    }
+    
+    // Extract multiple VAT tiers (reduced rates, etc.)
+    const reducedVatPatterns = [
+        /Reduced VAT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+        /Reduced rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i
+    ];
+    const reducedRates = [];
+    for (const pattern of reducedVatPatterns) {
+        const matches = cleanText.matchAll(pattern);
+        for (const match of matches) {
+            if (match[1] && !reducedRates.includes(match[1] + '%')) {
+                reducedRates.push(match[1] + '%');
+            }
+        }
+    }
+    if (reducedRates.length > 0 && rates.vat) {
+        rates.vatTiers = [rates.vat, ...reducedRates];
+    }
+    
+    // Try to extract from quick-rates tables
+    // Look for patterns like "22% 2024" or "22% (2024)"
+    const yearPattern = /(\d+(?:\.\d+)?)\s*%\s*(?:\([^)]*\))?\s*(?:202[0-9])?/g;
+    const allPercentages = [...cleanText.matchAll(yearPattern)]
+        .map(m => m[1] + '%')
+        .filter((v, i, a) => a.indexOf(v) === i) // unique
+        .slice(0, 6);
+    
+    if (allPercentages.length > 0 && Object.keys(rates).length === 0) {
+        rates.detectedRates = allPercentages;
+    }
+    
+    return Object.keys(rates).length > 0 ? rates : null;
+}
         }
     }
     
@@ -839,6 +922,54 @@ function getOfficialTaxAuthority(country) {
             title: 'ATO - Australian Taxation Office',
             url: 'https://www.ato.gov.au/',
             snippet: 'Official Australian tax authority.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'Indonesia': {
+            title: 'Direktorat Jenderal Pajak (DJP)',
+            url: 'https://pajak.go.id/',
+            snippet: 'Official Indonesian tax authority - Directorate General of Taxes.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'Malaysia': {
+            title: 'LHDNM - Inland Revenue Board of Malaysia',
+            url: 'https://www.hasil.gov.my/',
+            snippet: 'Official Malaysian tax authority.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'Thailand': {
+            title: 'RD - The Revenue Department Thailand',
+            url: 'https://www.rd.go.th/',
+            snippet: 'Official Thai tax authority.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'Vietnam': {
+            title: 'GDT - General Department of Taxation Vietnam',
+            url: 'https://thuedientu.gdt.gov.vn/',
+            snippet: 'Official Vietnamese tax authority.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'Philippines': {
+            title: 'BIR - Bureau of Internal Revenue',
+            url: 'https://www.bir.gov.ph/',
+            snippet: 'Official Philippine tax authority.',
+            type: 'official',
+            reliability: 'high',
+            source: 'Government'
+        },
+        'India': {
+            title: 'Income Tax Department India',
+            url: 'https://www.incometax.gov.in/',
+            snippet: 'Official Indian tax authority.',
             type: 'official',
             reliability: 'high',
             source: 'Government'
