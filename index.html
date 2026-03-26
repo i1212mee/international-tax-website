@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>International Tax Rate Query System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>International Tax Rate Query System</h1>
+            <p class="subtitle">Query tax rates for countries worldwide including VAT, GST, Income Tax, Business Tax, and Withholding Tax</p>
+        </header>
+
+        <main>
+            <!-- Parallel Layout: Two Sections Side by Side -->
+            <div class="parallel-container">
+                <!-- National Tax Rates Section -->
+                <section class="tax-section parallel-section" id="national-tax-section">
+                    <h2>National Tax Rates</h2>
+                    <p class="section-description">Query VAT/GST, Income Tax, and Business Tax rates by country</p>
+
+                    <div class="query-form">
+                        <div class="form-group">
+                            <label for="country-input">Select Country/Region:</label>
+                            <div class="searchable-select">
+                                <input type="text" id="country-input" class="form-control search-input" placeholder="Type to search country..." autocomplete="off">
+                                <div id="country-dropdown" class="dropdown-list"></div>
+                                <input type="hidden" id="country-select">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="transaction-type">Transaction Type:</label>
+                            <select id="transaction-type" class="form-control">
+                                <option value="">-- Select Type --</option>
+                                <option value="vat">VAT (Value Added Tax)</option>
+                                <option value="gst">GST (Goods and Services Tax)</option>
+                                <option value="income-tax">Income Tax</option>
+                                <option value="business-tax">Business Tax</option>
+                            </select>
+                        </div>
+
+                        <button id="query-national-tax" class="btn btn-primary">Query Tax Rate</button>
+                    </div>
+
+                    <div id="national-tax-results" class="results-container" style="display: none;">
+                        <h3>Query Results</h3>
+                        <div id="national-tax-content"></div>
+                    </div>
+                </section>
+
+                <!-- Withholding Tax Section -->
+                <section class="tax-section parallel-section" id="withholding-tax-section">
+                    <h2>Withholding Tax Rates</h2>
+                    <p class="section-description">Query withholding tax rates for cross-border transactions</p>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="single-query">Single Query</button>
+                        <button class="tab-btn" data-tab="batch-query">Batch Comparison</button>
+                    </div>
+
+                    <!-- Single Query Tab -->
+                    <div class="tab-content active" id="single-query">
+                        <div class="query-form">
+                            <div class="form-group">
+                                <label for="payer-input">Payer Country:</label>
+                                <div class="searchable-select">
+                                    <input type="text" id="payer-input" class="form-control search-input" placeholder="Type to search country..." autocomplete="off">
+                                    <div id="payer-dropdown" class="dropdown-list"></div>
+                                    <input type="hidden" id="payer-country">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="payee-input">Payee Country:</label>
+                                <div class="searchable-select">
+                                    <input type="text" id="payee-input" class="form-control search-input" placeholder="Type to search country..." autocomplete="off">
+                                    <div id="payee-dropdown" class="dropdown-list"></div>
+                                    <input type="hidden" id="payee-country">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="payment-type">Payment Type:</label>
+                                <select id="payment-type" class="form-control">
+                                    <option value="">-- Select Type --</option>
+                                    <option value="dividends">Dividends</option>
+                                    <option value="interest">Interest</option>
+                                    <option value="royalties">Royalties</option>
+                                    <option value="services">Technical Services</option>
+                                    <option value="management">Management Fees</option>
+                                </select>
+                            </div>
+
+                            <button id="query-withholding-tax" class="btn btn-primary">Query Withholding Tax Rate</button>
+                        </div>
+                    </div>
+
+                    <!-- Batch Query Tab -->
+                    <div class="tab-content" id="batch-query">
+                        <div class="query-form">
+                            <div class="form-group">
+                                <label for="batch-payer-input">Payer Country:</label>
+                                <div class="searchable-select">
+                                    <input type="text" id="batch-payer-input" class="form-control search-input" placeholder="Type to search country..." autocomplete="off">
+                                    <div id="batch-payer-dropdown" class="dropdown-list"></div>
+                                    <input type="hidden" id="batch-payer-country">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="batch-payment-type">Payment Type:</label>
+                                <select id="batch-payment-type" class="form-control">
+                                    <option value="">-- Select Type --</option>
+                                    <option value="dividends">Dividends</option>
+                                    <option value="interest">Interest</option>
+                                    <option value="royalties">Royalties</option>
+                                    <option value="services">Technical Services</option>
+                                    <option value="management">Management Fees</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Select Payee Countries (Multiple Selection):</label>
+                                <div class="batch-filter">
+                                    <input type="text" id="batch-country-filter" class="form-control" placeholder="Filter countries...">
+                                </div>
+                                <div id="batch-payee-countries" class="checkbox-grid"></div>
+                            </div>
+
+                            <button id="query-batch-withholding-tax" class="btn btn-primary">Batch Query & Compare</button>
+                        </div>
+                    </div>
+
+                    <div id="withholding-tax-results" class="results-container" style="display: none;">
+                        <h3>Query Results</h3>
+                        <div id="withholding-tax-content"></div>
+                        <div id="source-verification" class="source-section" style="display: none;">
+                            <h4>Data Sources & Verification</h4>
+                            <div id="source-list"></div>
+                            <div id="cross-verification-result"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 International Tax Rate Query System. All tax rates are for reference only.</p>
+            <p>Please verify with official tax authorities for the most accurate and up-to-date information.</p>
+        </footer>
+    </div>
+
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Querying tax rates...</p>
+    </div>
+
+    <script src="countries.js"></script>
+    <script src="tax-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
