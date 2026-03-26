@@ -604,22 +604,49 @@ async function queryNationalTax() {
         
         if (transactionType === 'turnover-tax') {
             // Auto-detect the tax type based on country
+            // Priority: SST > GST > VAT > Sales Tax > Turnover
             if (baseData) {
-                if (baseData.vat) {
-                    actualTaxType = 'vat';
-                    taxDisplayName = 'VAT (Value Added Tax)';
-                } else if (baseData.gst) {
-                    actualTaxType = 'gst';
-                    taxDisplayName = 'GST (Goods and Services Tax)';
-                } else if (baseData.sst) {
+                // Check for SST (Malaysia specific)
+                if (baseData.sst && baseData.sst.tiers) {
                     actualTaxType = 'sst';
                     taxDisplayName = 'SST (Sales and Service Tax)';
-                } else if (baseData.turnover) {
+                } 
+                // Check for GST (Australia, New Zealand, Singapore, etc.)
+                else if (baseData.gst && baseData.gst.tiers) {
+                    actualTaxType = 'gst';
+                    taxDisplayName = 'GST (Goods and Services Tax)';
+                } 
+                // Check for VAT (Europe, China, etc.)
+                else if (baseData.vat && baseData.vat.tiers) {
+                    actualTaxType = 'vat';
+                    taxDisplayName = 'VAT (Value Added Tax)';
+                }
+                // Check for sales tax (US)
+                else if (baseData.salesTax && baseData.salesTax.tiers) {
+                    actualTaxType = 'salesTax';
+                    taxDisplayName = 'Sales Tax';
+                }
+                // Check for turnover tax
+                else if (baseData.turnover && baseData.turnover.tiers) {
                     actualTaxType = 'turnover';
                     taxDisplayName = baseData.turnover.name || 'Turnover Tax';
-                } else {
-                    actualTaxType = 'vat';
-                    taxDisplayName = 'VAT/GST';
+                }
+                // Fallback - show available tax type or note
+                else {
+                    // Try to find any available indirect tax
+                    if (baseData.sst && baseData.sst.note) {
+                        actualTaxType = 'sst';
+                        taxDisplayName = 'SST (Sales and Service Tax)';
+                    } else if (baseData.gst && baseData.gst.note) {
+                        actualTaxType = 'gst';
+                        taxDisplayName = 'GST (Goods and Services Tax)';
+                    } else if (baseData.vat && baseData.vat.note) {
+                        actualTaxType = 'vat';
+                        taxDisplayName = 'VAT (Value Added Tax)';
+                    } else {
+                        actualTaxType = 'vat';
+                        taxDisplayName = 'Indirect Tax';
+                    }
                 }
             } else {
                 taxDisplayName = 'VAT/GST';
@@ -685,7 +712,41 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
     if (baseData) {
         switch(transactionType) {
             case 'turnover-tax':
-                const taxInfo = baseData.vat || baseData.gst || baseData.sst || baseData.turnover;
+                // Use actualTaxType to get the correct tax info
+                let taxInfo = null;
+                if (actualTaxType === 'sst' && baseData.sst) {
+                    taxInfo = baseData.sst;
+                } else if (actualTaxType === 'gst' && baseData.gst) {
+                    taxInfo = baseData.gst;
+                } else if (actualTaxType === 'vat' && baseData.vat) {
+                    taxInfo = baseData.vat;
+                } else if (actualTaxType === 'salesTax' && baseData.salesTax) {
+                    taxInfo = baseData.salesTax;
+                } else if (actualTaxType === 'turnover' && baseData.turnover) {
+                    taxInfo = baseData.turnover;
+                } else {
+                    // Fallback: find any available indirect tax with data
+                    if (baseData.sst && baseData.sst.tiers) {
+                        taxInfo = baseData.sst;
+                        taxDisplayName = 'SST (Sales and Service Tax)';
+                    } else if (baseData.gst && baseData.gst.tiers) {
+                        taxInfo = baseData.gst;
+                        taxDisplayName = 'GST (Goods and Services Tax)';
+                    } else if (baseData.vat && baseData.vat.tiers) {
+                        taxInfo = baseData.vat;
+                        taxDisplayName = 'VAT (Value Added Tax)';
+                    } else if (baseData.sst) {
+                        taxInfo = baseData.sst;
+                        taxDisplayName = 'SST (Sales and Service Tax)';
+                    } else if (baseData.gst) {
+                        taxInfo = baseData.gst;
+                        taxDisplayName = 'GST (Goods and Services Tax)';
+                    } else if (baseData.vat) {
+                        taxInfo = baseData.vat;
+                        taxDisplayName = 'VAT (Value Added Tax)';
+                    }
+                }
+                
                 if (taxInfo) {
                     html += `<div class="tax-type">${taxDisplayName}</div>`;
                     
