@@ -254,7 +254,7 @@ async function queryNationalTax() {
         const baseData = TAX_DATA.national[countryCode];
 
         // Search web for current rates
-        const searchQuery = `${countryName} ${transactionType.replace('-', ' ')} tax rate 2024`;
+        const searchQuery = `${countryName} ${transactionType.replace('-', ' ')} tax rate 2026`;
         const webResults = await searchWebRates(searchQuery);
 
         // Display results
