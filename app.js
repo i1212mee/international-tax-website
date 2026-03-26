@@ -537,12 +537,40 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     html += `<div class="tax-type" style="font-size: 0.9em; color: #6c757d; margin-top: 5px;">Payment Type: ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}</div>`;
     html += `<div class="rate-value">${treatyRate}</div>`;
 
-    // Add treaty information
-    html += `<div class="alert alert-info" style="margin-top: 15px;">`;
-    html += `<strong>Note:</strong> This rate is based on the Double Taxation Treaty (DTT) between ${payerName} and ${payeeName}. `;
-    html += `The actual rate may vary based on specific circumstances. Please verify with tax authorities.`;
-    html += `</div>`;
-
+    // Determine treaty status and show appropriate note
+    let noteHtml = '';
+    const treatyRateStr = String(treatyRate);
+    
+    if (treatyRateStr.includes('No Treaty') || treatyRateStr.includes('Limited Treaty')) {
+        // No applicable treaty
+        noteHtml = `<div class="alert alert-warning" style="margin-top: 15px;">`;
+        noteHtml += `<strong>Important:</strong> There is <strong>NO comprehensive Double Taxation Treaty (DTT)</strong> between ${payerName} and ${payeeName} for this type of payment. `;
+        if (payerCode === 'HK' && treatyRateStr.includes('Limited Treaty')) {
+            noteHtml += `The existing treaty only covers shipping and air transport activities. `;
+        }
+        noteHtml += `The rate shown is based on domestic law of ${payerName}. Please verify with tax authorities.`;
+        noteHtml += `</div>`;
+    } else if (treatyRateStr.includes('0%') && payerCode === 'HK') {
+        // HK specific - no WHT on interest/dividends
+        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
+        noteHtml += `<strong>Note:</strong> ${payerName} does <strong>NOT impose WHT on ${paymentType}</strong> under domestic tax law. `;
+        noteHtml += `This is a statutory exemption, not a treaty benefit. No DTT is required for this 0% rate.`;
+        noteHtml += `</div>`;
+    } else if (treatyRateStr === '0%' || treatyRateStr.includes('0% (')) {
+        // Treaty rate is 0%
+        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
+        noteHtml += `<strong>Note:</strong> This 0% rate is based on the Double Taxation Treaty (DTT) between ${payerName} and ${payeeName}. `;
+        noteHtml += `Please verify treaty conditions and obtain tax residency certificate if required.`;
+        noteHtml += `</div>`;
+    } else {
+        // Standard treaty rate
+        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
+        noteHtml += `<strong>Note:</strong> This rate is based on the Double Taxation Treaty (DTT) between ${payerName} and ${payeeName}. `;
+        noteHtml += `The actual rate may vary based on specific circumstances. Please verify with tax authorities.`;
+        noteHtml += `</div>`;
+    }
+    
+    html += noteHtml;
     html += `</div>`;
 
     contentDiv.innerHTML = html;
