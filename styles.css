@@ -407,24 +407,77 @@ main {
 .source-section {
     margin-top: 12px;
     padding: 12px;
-    background: #fff3cd;
+    background: #f8f9fa;
     border-radius: 6px;
-    border: 1px solid #ffc107;
+    border: 1px solid #17a2b8;
 }
 
 .source-section h4 {
-    color: #856404;
+    color: #0c5460;
     margin-bottom: 10px;
     font-size: 0.95em;
 }
 
+.source-description {
+    color: #6c757d;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+}
+
+/* Real-time Indicators */
+.realtime-indicator {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    padding: 10px;
+    background: #e8f4f8;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 1px solid #17a2b8;
+}
+
+.live-badge {
+    background: #28a745;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    font-weight: 700;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.query-time {
+    color: #495057;
+    font-size: 0.8em;
+}
+
+.search-duration {
+    color: #6c757d;
+    font-size: 0.8em;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Source Items */
 .source-item {
     background: white;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    border-left: 3px solid #28a745;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 4px solid #28a745;
     font-size: 0.85em;
+    transition: all 0.2s;
+}
+
+.source-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .source-item.verified {
@@ -435,13 +488,52 @@ main {
     border-left-color: #dc3545;
 }
 
+.source-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.source-number {
+    font-weight: 700;
+    color: #495057;
+    font-size: 0.8em;
+}
+
+.reliability-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    font-weight: 600;
+}
+
+.reliability-badge.high {
+    background: #d4edda;
+    color: #155724;
+}
+
+.reliability-badge.medium {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.source-snippet {
+    color: #6c757d;
+    margin-top: 5px;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
 .source-item a {
     color: #0056b3;
     text-decoration: none;
+    font-weight: 600;
 }
 
 .source-item a:hover {
     text-decoration: underline;
+    color: #004494;
 }
 
 #cross-verification-result {

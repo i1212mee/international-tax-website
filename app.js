@@ -253,12 +253,46 @@ async function queryNationalTax() {
         // Get base data from local database
         const baseData = TAX_DATA.national[countryCode];
 
+        // Determine the actual tax type for turnover tax
+        let actualTaxType = transactionType;
+        let taxDisplayName = '';
+        
+        if (transactionType === 'turnover-tax') {
+            // Auto-detect the tax type based on country
+            if (baseData) {
+                if (baseData.vat) {
+                    actualTaxType = 'vat';
+                    taxDisplayName = 'VAT (Value Added Tax)';
+                } else if (baseData.gst) {
+                    actualTaxType = 'gst';
+                    taxDisplayName = 'GST (Goods and Services Tax)';
+                } else if (baseData.sst) {
+                    actualTaxType = 'sst';
+                    taxDisplayName = 'SST (Sales and Service Tax)';
+                } else if (baseData.turnover) {
+                    actualTaxType = 'turnover';
+                    taxDisplayName = baseData.turnover.name || 'Turnover Tax';
+                } else {
+                    actualTaxType = 'vat';
+                    taxDisplayName = 'VAT/GST';
+                }
+            } else {
+                taxDisplayName = 'VAT/GST';
+            }
+        }
+
+        // Record search start time
+        const searchStartTime = Date.now();
+        
         // Search web for current rates
-        const searchQuery = `${countryName} ${transactionType.replace('-', ' ')} tax rate 2026`;
+        const searchQuery = `${countryName} ${actualTaxType.replace('-', ' ')} tax rate 2026`;
         const webResults = await searchWebRates(searchQuery);
+        
+        // Calculate search duration
+        const searchDuration = Date.now() - searchStartTime;
 
         // Display results
-        displayNationalTaxResults(countryName, countryCode, transactionType, baseData, webResults);
+        displayNationalTaxResults(countryName, countryCode, transactionType, actualTaxType, taxDisplayName, baseData, webResults, searchDuration);
     } catch (error) {
         console.error('Error querying national tax:', error);
         alert('Error querying tax rates. Please try again.');
@@ -268,20 +302,28 @@ async function queryNationalTax() {
 }
 
 // Display National Tax Results
-function displayNationalTaxResults(countryName, countryCode, transactionType, baseData, webResults) {
+function displayNationalTaxResults(countryName, countryCode, transactionType, actualTaxType, taxDisplayName, baseData, webResults, searchDuration) {
     const resultsContainer = document.getElementById('national-tax-results');
     const contentDiv = document.getElementById('national-tax-content');
+    const queryTime = new Date().toLocaleString('en-US', { 
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 
     let html = `<div class="tax-result-card">`;
     html += `<div class="country-name">${countryName}</div>`;
 
     if (baseData) {
         switch(transactionType) {
-            case 'vat':
-            case 'gst':
-                const taxInfo = baseData.vat || baseData.gst || baseData.sst;
+            case 'turnover-tax':
+                const taxInfo = baseData.vat || baseData.gst || baseData.sst || baseData.turnover;
                 if (taxInfo) {
-                    html += `<div class="tax-type">${transactionType.toUpperCase()}</div>`;
+                    html += `<div class="tax-type">${taxDisplayName}</div>`;
                     
                     // Check if it has tiers (new format)
                     if (taxInfo.tiers && taxInfo.tiers.length > 0) {
@@ -308,7 +350,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ba
                         html += `<div class="rate-label">${taxInfo.note}</div>`;
                     }
                 } else {
-                    html += `<div class="alert alert-warning">No ${transactionType.toUpperCase()} data available for this country.</div>`;
+                    html += `<div class="alert alert-warning">No turnover tax data available for this country.</div>`;
                 }
                 break;
 
@@ -385,14 +427,31 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ba
 
     html += `</div>`;
 
-    // Add web search sources
+    // Add web search sources with real-time indicators
     if (webResults && webResults.length > 0) {
         html += `<div class="source-section">`;
-        html += `<h4>Data Sources</h4>`;
-        webResults.forEach(result => {
+        html += `<div class="realtime-indicator">`;
+        html += `<span class="live-badge">● LIVE</span>`;
+        html += `<span class="query-time">Queried at: ${queryTime}</span>`;
+        html += `<span class="search-duration">Response time: ${searchDuration}ms</span>`;
+        html += `</div>`;
+        html += `<h4>Authoritative Data Sources</h4>`;
+        html += `<p class="source-description">The following sources were queried in real-time for the most current tax information:</p>`;
+        
+        webResults.forEach((result, index) => {
+            const reliabilityBadge = result.reliability === 'high' ? 
+                '<span class="reliability-badge high">Official/Professional</span>' : 
+                '<span class="reliability-badge medium">Reference</span>';
+            const typeIcon = result.type === 'official' ? '🏛️' : 
+                            result.type === 'professional' ? '💼' : '📖';
+            
             html += `<div class="source-item verified">`;
-            html += `<a href="${result.url}" target="_blank" rel="noopener">${result.title}</a>`;
-            html += `<p>${result.snippet}</p>`;
+            html += `<div class="source-header">`;
+            html += `<span class="source-number">Source ${index + 1}</span>`;
+            html += `${reliabilityBadge}`;
+            html += `</div>`;
+            html += `<a href="${result.url}" target="_blank" rel="noopener">${typeIcon} ${result.title}</a>`;
+            html += `<p class="source-snippet">${result.snippet}</p>`;
             html += `</div>`;
         });
         html += `</div>`;
@@ -428,26 +487,22 @@ async function queryWithholdingTax() {
         const treatyKey = `${payerCountry}_${payeeCountry}_${paymentType}`;
         const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
 
+        // Record search start time
+        const searchStartTime = Date.now();
+
         // Search web for verification (multiple sources)
-        const searchQueries = [
-            `${payerName} ${payeeName} withholding tax ${paymentType} treaty rate`,
-            `${payerName} to ${payeeName} WHT ${paymentType} double taxation treaty`,
-            `${payerName} ${payeeName} tax treaty ${paymentType} withholding`
-        ];
+        const searchQuery = `${payerName} ${payeeName} withholding tax ${paymentType} treaty rate 2026`;
+        const webResults = await searchWebRates(searchQuery, 'withholding');
 
-        const webResults = await Promise.all(
-            searchQueries.map(q => searchWebRates(q))
-        );
-
-        // Flatten and deduplicate results
-        const allResults = webResults.flat().slice(0, 5);
+        // Calculate search duration
+        const searchDuration = Date.now() - searchStartTime;
 
         // Display results with cross-verification
         displayWithholdingTaxResults(
             payerName, payerCountry,
             payeeName, payeeCountry,
             paymentType, treatyRate,
-            allResults
+            webResults, searchDuration
         );
     } catch (error) {
         console.error('Error querying withholding tax:', error);
@@ -458,12 +513,22 @@ async function queryWithholdingTax() {
 }
 
 // Display Withholding Tax Results
-function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode, paymentType, treatyRate, webResults) {
+function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode, paymentType, treatyRate, webResults, searchDuration) {
     const resultsContainer = document.getElementById('withholding-tax-results');
     const contentDiv = document.getElementById('withholding-tax-content');
     const sourceSection = document.getElementById('source-verification');
     const sourceList = document.getElementById('source-list');
     const verificationResult = document.getElementById('cross-verification-result');
+    
+    const queryTime = new Date().toLocaleString('en-US', { 
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
 
     // Main result card
     let html = `<div class="tax-result-card">`;
@@ -482,18 +547,36 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
 
     contentDiv.innerHTML = html;
 
-    // Display sources with cross-verification
+    // Display sources with real-time indicators
     if (webResults && webResults.length > 0) {
-        let sourceHtml = '';
+        // Real-time indicator
+        let indicatorHtml = `
+            <div class="realtime-indicator">
+                <span class="live-badge">● LIVE</span>
+                <span class="query-time">Queried at: ${queryTime}</span>
+                <span class="search-duration">Response time: ${searchDuration}ms</span>
+            </div>
+        `;
+        
+        // Source items with better formatting
+        let sourceHtml = indicatorHtml + `<p class="source-description">The following authoritative sources were queried in real-time:</p>`;
 
-        // Take up to 5 sources for cross-verification
         const sources = webResults.slice(0, 5);
 
         sources.forEach((source, index) => {
+            const reliabilityBadge = source.reliability === 'high' ? 
+                '<span class="reliability-badge high">Official/Professional</span>' : 
+                '<span class="reliability-badge medium">Reference</span>';
+            const typeIcon = source.type === 'official' ? '🏛️' : 
+                            source.type === 'professional' ? '💼' : '📖';
+            
             sourceHtml += `<div class="source-item verified">`;
-            sourceHtml += `<strong>Source ${index + 1}:</strong> `;
-            sourceHtml += `<a href="${source.url}" target="_blank" rel="noopener">${source.title}</a>`;
-            sourceHtml += `<p style="font-size: 0.9em; margin-top: 5px;">${source.snippet}</p>`;
+            sourceHtml += `<div class="source-header">`;
+            sourceHtml += `<span class="source-number">Source ${index + 1}</span>`;
+            sourceHtml += `${reliabilityBadge}`;
+            sourceHtml += `</div>`;
+            sourceHtml += `<a href="${source.url}" target="_blank" rel="noopener">${typeIcon} ${source.title}</a>`;
+            sourceHtml += `<p class="source-snippet">${source.snippet}</p>`;
             sourceHtml += `</div>`;
         });
 
@@ -502,20 +585,11 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
         // Cross-verification result
         const verificationHtml = `
             <div class="verification-warning">
-                <strong>Cross-Verification Status:</strong>
+                <strong>Cross-Verification Recommended:</strong>
                 <p style="margin-top: 10px;">
-                    Please manually verify the tax rate from at least <strong>3 different sources</strong> above.
-                    Tax treaties and rates may change, and official government sources should be consulted for the most accurate information.
+                    Please verify the tax rate from at least <strong>3 different sources</strong> above.
+                    Tax treaties and rates may change. Click the source links to access the original authoritative data.
                 </p>
-                <p style="margin-top: 10px; font-size: 0.9em;">
-                    <strong>Recommended Official Sources:</strong>
-                </p>
-                <ul style="margin-top: 5px; padding-left: 20px;">
-                    <li>OECD Tax Database: <a href="https://www.oecd.org/tax/tax-policy/" target="_blank">oecd.org/tax</a></li>
-                    <li>${payerName} Tax Authority Official Website</li>
-                    <li>${payeeName} Tax Authority Official Website</li>
-                    <li>IBFD Tax Research Platform</li>
-                </ul>
             </div>
         `;
 
