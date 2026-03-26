@@ -639,11 +639,16 @@ function displayBatchResults(payerName, payerCode, paymentType, results) {
 }
 
 // Real function to call backend API for web search
-// Uses Vercel serverless function to get tax rate sources
+// Uses serverless function to get tax rate sources
 async function searchWebRates(query, type = 'general') {
     try {
-        // Try to call the backend API
-        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+        // Try Netlify function path first
+        let response = await fetch(`/.netlify/functions/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+        
+        // If Netlify function fails, try Vercel path
+        if (!response.ok) {
+            response = await fetch(`/api/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+        }
         
         if (response.ok) {
             const data = await response.json();
