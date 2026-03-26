@@ -284,9 +284,19 @@ async function queryNationalTax() {
         // Record search start time
         const searchStartTime = Date.now();
         
-        // Search web for current rates
+        // Determine search type for API
+        let searchType = 'national';
+        if (actualTaxType === 'vat' || actualTaxType === 'gst' || actualTaxType === 'sst' || actualTaxType === 'turnover') {
+            searchType = 'vat';
+        } else if (actualTaxType === 'income-tax') {
+            searchType = 'income-tax';
+        } else if (actualTaxType === 'business-tax') {
+            searchType = 'business-tax';
+        }
+        
+        // Search web for current rates via API
         const searchQuery = `${countryName} ${actualTaxType.replace('-', ' ')} tax rate 2026`;
-        const webResults = await searchWebRates(searchQuery);
+        const webResults = await searchWebRates(searchQuery, searchType);
         
         // Calculate search duration
         const searchDuration = Date.now() - searchStartTime;

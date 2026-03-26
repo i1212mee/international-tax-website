@@ -154,8 +154,12 @@ exports.handler = async (event, context) => {
     try {
         let results = [];
         
+        // For national tax queries (VAT, income tax, etc.)
+        if (type === 'national' || type === 'vat' || type === 'income-tax' || type === 'business-tax') {
+            results = await fetchNationalTaxFromPwC(query, type);
+        }
         // For WHT queries with specific countries, fetch from PwC
-        if (type === 'wht' && payerCountry && payeeCountry) {
+        else if (type === 'wht' && payerCountry && payeeCountry) {
             results = await fetchWHTFromPwC(payerCountry, payeeCountry, paymentType);
         } else {
             // General search
@@ -187,6 +191,196 @@ exports.handler = async (event, context) => {
         };
     }
 };
+
+// Fetch National Tax data from PwC for a country
+async function fetchNationalTaxFromPwC(query, type) {
+    const results = [];
+    const queryLower = query.toLowerCase();
+    
+    // Extract country from query
+    let countrySlug = null;
+    let countryName = null;
+    
+    for (const [key, slug] of Object.entries(PWC_COUNTRY_MAP)) {
+        if (queryLower.includes(key)) {
+            countrySlug = slug;
+            countryName = getCanonicalCountryName(key);
+            break;
+        }
+    }
+    
+    if (!countrySlug) {
+        // Try to find country name directly
+        const words = queryLower.split(/\s+/);
+        for (const word of words) {
+            if (PWC_COUNTRY_MAP[word]) {
+                countrySlug = PWC_COUNTRY_MAP[word];
+                countryName = getCanonicalCountryName(word);
+                break;
+            }
+        }
+    }
+    
+    if (!countrySlug) {
+        return getGeneralSources();
+    }
+    
+    // Build PwC URLs for the country
+    const overviewUrl = `${PWC_BASE_URL}/${countrySlug}`;
+    const corporateTaxUrl = `${PWC_BASE_URL}/${countrySlug}/corporate/taxation-of-corporate-entities`;
+    const individualTaxUrl = `${PWC_BASE_URL}/${countrySlug}/individual/taxation-of-individuals`;
+    const indirectTaxUrl = `${PWC_BASE_URL}/${countrySlug}/corporate/indirect-taxes`;
+    const quickRatesUrl = `${PWC_BASE_URL}/${countrySlug}/quick-rates-and-dates`;
+    
+    // Determine tax type from query
+    const isVATQuery = queryLower.includes('vat') || queryLower.includes('gst') || queryLower.includes('turnover') || queryLower.includes('sales tax') || type === 'vat';
+    const isIncomeTaxQuery = queryLower.includes('income tax') || queryLower.includes('corporate tax') || queryLower.includes('pit') || queryLower.includes('cit') || type === 'income-tax';
+    const isBusinessTaxQuery = queryLower.includes('business tax') || type === 'business-tax';
+    
+    // Add main overview page (always include)
+    results.push({
+        title: `PwC - ${countryName} Tax Overview`,
+        url: overviewUrl,
+        snippet: `Official PwC tax summary for ${countryName} - comprehensive overview of corporate tax, individual tax, VAT/GST, withholding taxes and other tax rates.`,
+        type: 'professional',
+        reliability: 'high',
+        source: 'PwC Tax Summaries',
+        isDirectPage: true
+    });
+    
+    // Add quick rates page
+    results.push({
+        title: `PwC - ${countryName} Quick Rates & Dates`,
+        url: quickRatesUrl,
+        snippet: `Quick reference for ${countryName} tax rates: corporate income tax (CIT) rates, personal income tax (PIT) rates, VAT/GST rates, withholding tax rates.`,
+        type: 'professional',
+        reliability: 'high',
+        source: 'PwC Tax Summaries',
+        isDirectPage: true
+    });
+    
+    // Add relevant specific pages based on query type
+    if (isVATQuery || isBusinessTaxQuery) {
+        results.push({
+            title: `PwC - ${countryName} Indirect Taxes (VAT/GST)`,
+            url: indirectTaxUrl,
+            snippet: `Detailed information on ${countryName} VAT/GST rates, registration thresholds, and compliance requirements.`,
+            type: 'professional',
+            reliability: 'high',
+            source: 'PwC Tax Summaries',
+            isDirectPage: true
+        });
+    }
+    
+    if (isIncomeTaxQuery) {
+        results.push({
+            title: `PwC - ${countryName} Corporate Taxation`,
+            url: corporateTaxUrl,
+            snippet: `Detailed information on ${countryName} corporate income tax rates, deductions, and incentives.`,
+            type: 'professional',
+            reliability: 'high',
+            source: 'PwC Tax Summaries',
+            isDirectPage: true
+        });
+        
+        results.push({
+            title: `PwC - ${countryName} Individual Taxation`,
+            url: individualTaxUrl,
+            snippet: `Detailed information on ${countryName} personal income tax rates, deductions, and allowances.`,
+            type: 'professional',
+            reliability: 'high',
+            source: 'PwC Tax Summaries',
+            isDirectPage: true
+        });
+    }
+    
+    // Try to fetch and parse actual data from PwC
+    try {
+        const pageData = await fetchPwCPage(overviewUrl);
+        if (pageData) {
+            const extractedRates = parseTaxRates(pageData, type);
+            if (extractedRates) {
+                results[0].extractedData = extractedRates;
+            }
+        }
+    } catch (e) {
+        console.log('Could not fetch PwC overview:', e.message);
+    }
+    
+    // Add official tax authority
+    const officialSource = getOfficialTaxAuthority(countryName);
+    if (officialSource) {
+        results.push(officialSource);
+    }
+    
+    // Add OECD reference
+    results.push({
+        title: 'OECD Tax Database',
+        url: 'https://www.oecd.org/tax/tax-policy/',
+        snippet: 'Official OECD tax statistics and policy analysis.',
+        type: 'official',
+        reliability: 'high',
+        source: 'OECD'
+    });
+    
+    return results;
+}
+
+// Parse tax rates from PwC page HTML
+function parseTaxRates(html, type) {
+    const rates = {};
+    
+    // Extract CIT rate
+    const citMatch = html.match(/Headline CIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
+    if (citMatch) {
+        rates.cit = citMatch[1] + '%';
+    }
+    
+    // Extract PIT rate
+    const pitMatch = html.match(/Headline PIT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
+    if (pitMatch) {
+        rates.pit = pitMatch[1] + '%';
+    }
+    
+    // Extract VAT/GST rate
+    const vatMatch = html.match(/Standard VAT rate[^<]*(\d+(?:\.\d+)?)\s*%?/i) ||
+                     html.match(/Standard GST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i);
+    if (vatMatch) {
+        rates.vat = vatMatch[1] + '%';
+    }
+    
+    return Object.keys(rates).length > 0 ? rates : null;
+}
+
+// Get general sources when country is not identified
+function getGeneralSources() {
+    return [
+        {
+            title: 'PwC Worldwide Tax Summaries',
+            url: 'https://taxsummaries.pwc.com/',
+            snippet: 'Comprehensive guides to corporate and individual taxes in jurisdictions worldwide.',
+            type: 'professional',
+            reliability: 'high',
+            source: 'PwC Tax Summaries'
+        },
+        {
+            title: 'OECD Tax Database',
+            url: 'https://www.oecd.org/tax/tax-policy/',
+            snippet: 'Official OECD tax statistics and policy analysis.',
+            type: 'official',
+            reliability: 'high',
+            source: 'OECD'
+        },
+        {
+            title: 'KPMG Tax Rates Online',
+            url: 'https://home.kpmg/xx/en/home/services/tax/tax-tools-and-resources/tax-rates-online.html',
+            snippet: 'Interactive tax rate tables by country.',
+            type: 'professional',
+            reliability: 'high',
+            source: 'KPMG'
+        }
+    ];
+}
 
 // Fetch WHT data from PwC for specific country pair
 async function fetchWHTFromPwC(payerCountry, payeeCountry, paymentType) {
