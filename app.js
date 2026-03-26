@@ -8,25 +8,160 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
 });
 
-// Initialize country dropdowns
+// Initialize country dropdowns with autocomplete
 function initializeCountryDropdowns() {
-    const dropdowns = [
-        'country-select',
-        'payer-country',
-        'payee-country',
-        'batch-payer-country'
-    ];
+    // Setup autocomplete for each country input
+    setupAutocomplete('country-input', 'country-dropdown', 'country-select');
+    setupAutocomplete('payer-input', 'payer-dropdown', 'payer-country');
+    setupAutocomplete('payee-input', 'payee-dropdown', 'payee-country');
+    setupAutocomplete('batch-payer-input', 'batch-payer-dropdown', 'batch-payer-country');
+    
+    // Setup batch country filter
+    setupBatchFilter();
+}
 
-    dropdowns.forEach(id => {
-        const select = document.getElementById(id);
-        if (select) {
-            COUNTRIES.forEach(country => {
-                const option = document.createElement('option');
-                option.value = country.code;
-                option.textContent = country.name;
-                select.appendChild(option);
-            });
+// Setup autocomplete for a single input
+function setupAutocomplete(inputId, dropdownId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const dropdown = document.getElementById(dropdownId);
+    const hidden = document.getElementById(hiddenId);
+    
+    if (!input || !dropdown || !hidden) return;
+    
+    let highlightedIndex = -1;
+    let filteredCountries = [];
+    
+    // Show dropdown on focus
+    input.addEventListener('focus', function() {
+        const value = this.value.trim().toLowerCase();
+        filteredCountries = value ? 
+            COUNTRIES.filter(c => 
+                c.name.toLowerCase().includes(value) || 
+                c.code.toLowerCase().includes(value)
+            ) : COUNTRIES;
+        showDropdown(filteredCountries);
+    });
+    
+    // Filter on input
+    input.addEventListener('input', function() {
+        const value = this.value.trim().toLowerCase();
+        hidden.value = ''; // Reset hidden value when input changes
+        
+        if (!value) {
+            filteredCountries = COUNTRIES;
+        } else {
+            filteredCountries = COUNTRIES.filter(c => 
+                c.name.toLowerCase().includes(value) || 
+                c.code.toLowerCase().includes(value)
+            );
         }
+        
+        showDropdown(filteredCountries);
+        highlightedIndex = -1;
+    });
+    
+    // Keyboard navigation
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('.dropdown-item');
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+            updateHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = Math.max(highlightedIndex - 1, 0);
+            updateHighlight(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                selectCountry(items[highlightedIndex]);
+            } else if (filteredCountries.length > 0) {
+                selectCountryByIndex(0);
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // Show dropdown function
+    function showDropdown(countries) {
+        if (countries.length === 0) {
+            dropdown.innerHTML = '<div class="dropdown-empty">No countries found</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+        
+        dropdown.innerHTML = countries.map((c, index) => `
+            <div class="dropdown-item" data-code="${c.code}" data-name="${c.name}">
+                <span class="country-name">${c.name}</span>
+                <span class="country-code">${c.code}</span>
+            </div>
+        `).join('');
+        
+        // Add click handlers
+        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', function() {
+                selectCountry(this);
+            });
+        });
+        
+        dropdown.style.display = 'block';
+    }
+    
+    // Update highlight
+    function updateHighlight(items) {
+        items.forEach((item, index) => {
+            item.classList.toggle('highlighted', index === highlightedIndex);
+        });
+        
+        if (highlightedIndex >= 0 && items[highlightedIndex]) {
+            items[highlightedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+    
+    // Select country
+    function selectCountry(element) {
+        const code = element.getAttribute('data-code');
+        const name = element.getAttribute('data-name');
+        input.value = name;
+        hidden.value = code;
+        dropdown.style.display = 'none';
+        highlightedIndex = -1;
+    }
+    
+    // Select country by index
+    function selectCountryByIndex(index) {
+        if (filteredCountries[index]) {
+            input.value = filteredCountries[index].name;
+            hidden.value = filteredCountries[index].code;
+            dropdown.style.display = 'none';
+        }
+    }
+}
+
+// Setup batch country filter
+function setupBatchFilter() {
+    const filterInput = document.getElementById('batch-country-filter');
+    const container = document.getElementById('batch-payee-countries');
+    
+    if (!filterInput || !container) return;
+    
+    filterInput.addEventListener('input', function() {
+        const value = this.value.toLowerCase();
+        const items = container.querySelectorAll('.checkbox-item');
+        
+        items.forEach(item => {
+            const label = item.querySelector('label').textContent.toLowerCase();
+            item.style.display = label.includes(value) ? '' : 'none';
+        });
     });
 }
 

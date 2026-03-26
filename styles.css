@@ -151,12 +151,29 @@ main {
     border-bottom: none;
 }
 
-.dropdown-item:hover {
+.dropdown-item:hover,
+.dropdown-item.highlighted {
     background: #e3f2fd;
 }
 
 .dropdown-item.selected {
     background: #bbdefb;
+}
+
+.dropdown-empty {
+    padding: 10px 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.dropdown-item .country-name {
+    font-weight: 500;
+}
+
+.dropdown-item .country-code {
+    color: #6c757d;
+    font-size: 0.8em;
+    margin-left: 8px;
 }
 
 .no-results {
