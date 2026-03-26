@@ -663,11 +663,13 @@ const TAX_DATA = {
             gst: { standard: null, note: "GST replaced by SST in 2018" },
             sst: {
                 tiers: [
-                    { rate: "10%", type: "sales", label: "Sales Tax", note: "Manufactured goods" },
-                    { rate: "5%", type: "service", label: "Service Tax", note: "Services, hospitality" },
-                    { rate: "6%", type: "service-digital", label: "Digital Service Tax", note: "Digital services" }
+                    { rate: "5%", type: "sales-reduced", label: "Sales Tax (Reduced)", note: "Selected non-essential goods, premium items" },
+                    { rate: "10%", type: "sales-standard", label: "Sales Tax (Standard)", note: "Most taxable goods, luxury items" },
+                    { rate: "6%", type: "service-reduced", label: "Service Tax (Reduced)", note: "F&B, telecom, parking, logistics, construction, private healthcare" },
+                    { rate: "8%", type: "service-standard", label: "Service Tax (Standard)", note: "Most services, leasing, financial services" },
+                    { rate: "8%", type: "digital", label: "Digital Service Tax", note: "Digital services (increased from 6% in 2024)" }
                 ],
-                note: "Sales and Service Tax (SST)"
+                note: "Sales and Service Tax (SST) - Updated July 2025"
             },
             incomeTax: {
                 tiers: [
@@ -678,7 +680,8 @@ const TAX_DATA = {
             },
             businessTax: {
                 tiers: [
-                    { rate: "5-10%", type: "standard", label: "SST", note: "Sales and Service Tax" }
+                    { rate: "5-10%", type: "sales", label: "Sales Tax", note: "5% or 10% depending on goods" },
+                    { rate: "6-8%", type: "service", label: "Service Tax", note: "6% or 8% depending on services" }
                 ]
             }
         },
