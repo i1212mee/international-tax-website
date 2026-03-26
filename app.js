@@ -492,7 +492,7 @@ async function queryWithholdingTax() {
 
         // Search web for verification (multiple sources)
         const searchQuery = `${payerName} ${payeeName} withholding tax ${paymentType} treaty rate 2026`;
-        const webResults = await searchWebRates(searchQuery, 'withholding');
+        const webResults = await searchWebRates(searchQuery, 'wht', payerName, payeeName, paymentType);
 
         // Calculate search duration
         const searchDuration = Date.now() - searchStartTime;
@@ -714,18 +714,29 @@ function displayBatchResults(payerName, payerCode, paymentType, results) {
 
 // Real function to call backend API for web search
 // Uses serverless function to get tax rate sources
-async function searchWebRates(query, type = 'general') {
+async function searchWebRates(query, type = 'general', payerCountry = null, payeeCountry = null, paymentType = null) {
     try {
+        // Build URL with all parameters
+        let url = `/.netlify/functions/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`;
+        if (payerCountry) url += `&payerCountry=${encodeURIComponent(payerCountry)}`;
+        if (payeeCountry) url += `&payeeCountry=${encodeURIComponent(payeeCountry)}`;
+        if (paymentType) url += `&paymentType=${encodeURIComponent(paymentType)}`;
+        
         // Try Netlify function path first
-        let response = await fetch(`/.netlify/functions/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+        let response = await fetch(url);
         
         // If Netlify function fails, try Vercel path
         if (!response.ok) {
-            response = await fetch(`/api/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+            let vercelUrl = `/api/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`;
+            if (payerCountry) vercelUrl += `&payerCountry=${encodeURIComponent(payerCountry)}`;
+            if (payeeCountry) vercelUrl += `&payeeCountry=${encodeURIComponent(payeeCountry)}`;
+            if (paymentType) vercelUrl += `&paymentType=${encodeURIComponent(paymentType)}`;
+            response = await fetch(vercelUrl);
         }
         
         if (response.ok) {
             const data = await response.json();
+            console.log('API response:', data); // Debug log
             return data.results || [];
         } else {
             console.warn('API search failed, falling back to local data');
