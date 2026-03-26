@@ -128,8 +128,24 @@
                     <!-- Batch Query Tab -->
                     <div class="tab-content" id="batch-query">
                         <div class="query-form">
+                            <!-- Query Direction Toggle -->
                             <div class="form-group">
-                                <label for="batch-payer-input">Payer Country:</label>
+                                <label>Query Direction:</label>
+                                <div class="direction-toggle">
+                                    <button type="button" class="direction-btn active" id="direction-one-payer" data-direction="one-payer">
+                                        <span class="direction-icon">→</span>
+                                        <span>One Payer → Multiple Payees</span>
+                                    </button>
+                                    <button type="button" class="direction-btn" id="direction-one-payee" data-direction="one-payee">
+                                        <span class="direction-icon">←</span>
+                                        <span>Multiple Payers → One Payee</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Single Country Input (Payer or Payee depending on direction) -->
+                            <div class="form-group" id="single-country-group">
+                                <label for="batch-payer-input" id="single-country-label">Payer Country:</label>
                                 <div class="searchable-select">
                                     <input type="text" id="batch-payer-input" class="form-control search-input" placeholder="Type to search country..." autocomplete="off">
                                     <div id="batch-payer-dropdown" class="dropdown-list"></div>
@@ -149,8 +165,9 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label>Select Payee Countries (Multiple Selection):</label>
+                            <!-- Multiple Countries Selection (Payees or Payers depending on direction) -->
+                            <div class="form-group" id="multiple-countries-group">
+                                <label id="multiple-countries-label">Select Payee Countries (Multiple Selection):</label>
                                 <div class="batch-filter">
                                     <input type="text" id="batch-country-filter" class="form-control" placeholder="Filter countries...">
                                 </div>
@@ -162,6 +179,9 @@
                                     <input type="checkbox" id="bidirectional-comparison" checked>
                                     Enable Bidirectional Comparison (Payer↔Payee)
                                 </label>
+                                <small class="form-hint" style="display: block; margin-top: 5px; color: #6c757d;">
+                                    When enabled, results will show both directions: Payer→Payee and Payee→Payer rates
+                                </small>
                             </div>
 
                             <button id="query-batch-withholding-tax" class="btn btn-primary">Batch Query & Compare</button>

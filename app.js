@@ -6,6 +6,9 @@ const STORAGE_KEYS = {
     BOOKMARKS: 'taxQueryBookmarks'
 };
 
+// Query direction state
+let queryDirection = 'one-payer'; // 'one-payer' or 'one-payee'
+
 // DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeCountryDropdowns();
@@ -13,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTabs();
     initializeEventListeners();
     initializeHistoryAndBookmarks();
+    initializeDirectionToggle();
 });
 
 // Initialize country dropdowns with autocomplete
@@ -235,6 +239,54 @@ function initializeEventListeners() {
 function initializeHistoryAndBookmarks() {
     updateHistoryCount();
     updateBookmarkCount();
+}
+
+// Initialize direction toggle
+function initializeDirectionToggle() {
+    const onePayerBtn = document.getElementById('direction-one-payer');
+    const onePayeeBtn = document.getElementById('direction-one-payee');
+
+    onePayerBtn.addEventListener('click', function() {
+        setQueryDirection('one-payer');
+    });
+
+    onePayeeBtn.addEventListener('click', function() {
+        setQueryDirection('one-payee');
+    });
+}
+
+// Set query direction
+function setQueryDirection(direction) {
+    queryDirection = direction;
+
+    const onePayerBtn = document.getElementById('direction-one-payer');
+    const onePayeeBtn = document.getElementById('direction-one-payee');
+    const singleCountryLabel = document.getElementById('single-country-label');
+    const multipleCountriesLabel = document.getElementById('multiple-countries-label');
+    const batchPayerInput = document.getElementById('batch-payer-input');
+
+    if (direction === 'one-payer') {
+        onePayerBtn.classList.add('active');
+        onePayeeBtn.classList.remove('active');
+        singleCountryLabel.textContent = 'Payer Country:';
+        multipleCountriesLabel.textContent = 'Select Payee Countries (Multiple Selection):';
+        batchPayerInput.placeholder = 'Type to search payer country...';
+    } else {
+        onePayerBtn.classList.remove('active');
+        onePayeeBtn.classList.add('active');
+        singleCountryLabel.textContent = 'Payee Country:';
+        multipleCountriesLabel.textContent = 'Select Payer Countries (Multiple Selection):';
+        batchPayerInput.placeholder = 'Type to search payee country...';
+    }
+
+    // Clear the single country input
+    document.getElementById('batch-payer-country').value = '';
+    batchPayerInput.value = '';
+
+    // Uncheck all checkboxes
+    document.querySelectorAll('#batch-payee-countries input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
 }
 
 // Toggle history panel
@@ -1085,19 +1137,21 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
 
 // Query Batch Withholding Tax Rates
 async function queryBatchWithholdingTax() {
-    const payerCountry = document.getElementById('batch-payer-country').value;
+    const singleCountry = document.getElementById('batch-payer-country').value;
     const paymentType = document.getElementById('batch-payment-type').value;
 
-    // Get selected payee countries
-    const payeeCheckboxes = document.querySelectorAll('#batch-payee-countries input[type="checkbox"]:checked');
-    const payeeCountries = Array.from(payeeCheckboxes).map(cb => cb.value);
+    // Get selected countries (multiple)
+    const multipleCheckboxes = document.querySelectorAll('#batch-payee-countries input[type="checkbox"]:checked');
+    const multipleCountries = Array.from(multipleCheckboxes).map(cb => cb.value);
 
-    if (!payerCountry || !paymentType || payeeCountries.length === 0) {
-        alert('Please select payer country, payment type, and at least one payee country.');
+    if (!singleCountry || !paymentType || multipleCountries.length === 0) {
+        const singleLabel = queryDirection === 'one-payer' ? 'payer country' : 'payee country';
+        const multipleLabel = queryDirection === 'one-payer' ? 'payee countries' : 'payer countries';
+        alert(`Please select ${singleLabel}, payment type, and at least one of the ${multipleLabel}.`);
         return;
     }
 
-    if (payeeCountries.length > 20) {
+    if (multipleCountries.length > 20) {
         alert('Please select a maximum of 20 countries for batch comparison.');
         return;
     }
@@ -1105,52 +1159,102 @@ async function queryBatchWithholdingTax() {
     showLoading();
 
     try {
-        const payerName = COUNTRIES.find(c => c.code === payerCountry)?.name || payerCountry;
+        const singleName = COUNTRIES.find(c => c.code === singleCountry)?.name || singleCountry;
 
         // Check if bidirectional comparison is enabled
         const bidirectionalEnabled = document.getElementById('bidirectional-comparison').checked;
 
-        // Prepare results table
+        // Prepare results based on direction
         const results = [];
 
-        for (const payeeCode of payeeCountries) {
-            const payeeName = COUNTRIES.find(c => c.code === payeeCode)?.name || payeeCode;
+        if (queryDirection === 'one-payer') {
+            // One Payer → Multiple Payees
+            const payerCountry = singleCountry;
+            const payerName = singleName;
 
-            // Get treaty rate (Payer → Payee)
-            const treatyKey = `${payerCountry}_${payeeCode}_${paymentType}`;
-            const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
+            for (const payeeCode of multipleCountries) {
+                const payeeName = COUNTRIES.find(c => c.code === payeeCode)?.name || payeeCode;
 
-            const result = {
-                payeeName,
-                payeeCode,
-                rate: treatyRate,
-                hasTreaty: !!TAX_DATA.withholding[treatyKey]
-            };
+                // Get treaty rate (Payer → Payee)
+                const treatyKey = `${payerCountry}_${payeeCode}_${paymentType}`;
+                const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
 
-            // If bidirectional, also get reverse rate
-            if (bidirectionalEnabled) {
-                const reverseTreatyKey = `${payeeCode}_${payerCountry}_${paymentType}`;
-                const reverseRate = TAX_DATA.withholding[reverseTreatyKey] || getDefaultWHTRate(paymentType);
-                result.reverseRate = reverseRate;
-                result.hasReverseTreaty = !!TAX_DATA.withholding[reverseTreatyKey];
+                const result = {
+                    payeeName,
+                    payeeCode,
+                    rate: treatyRate,
+                    hasTreaty: !!TAX_DATA.withholding[treatyKey]
+                };
+
+                // If bidirectional, also get reverse rate
+                if (bidirectionalEnabled) {
+                    const reverseTreatyKey = `${payeeCode}_${payerCountry}_${paymentType}`;
+                    const reverseRate = TAX_DATA.withholding[reverseTreatyKey] || getDefaultWHTRate(paymentType);
+                    result.reverseRate = reverseRate;
+                    result.hasReverseTreaty = !!TAX_DATA.withholding[reverseTreatyKey];
+                }
+
+                results.push(result);
             }
 
-            results.push(result);
+            // Add to history
+            addToHistory({
+                type: 'batch',
+                title: `Batch WHT: ${payerName} → ${multipleCountries.length} countries (${paymentType})`,
+                payerCode: payerCountry,
+                payerName,
+                payeeCodes: multipleCountries,
+                paymentType,
+                bidirectional: bidirectionalEnabled
+            });
+
+            // Display batch results
+            displayBatchResults(payerName, payerCountry, paymentType, results, bidirectionalEnabled, 'one-payer');
+
+        } else {
+            // Multiple Payers → One Payee
+            const payeeCountry = singleCountry;
+            const payeeName = singleName;
+
+            for (const payerCode of multipleCountries) {
+                const payerNameTemp = COUNTRIES.find(c => c.code === payerCode)?.name || payerCode;
+
+                // Get treaty rate (Payer → Payee)
+                const treatyKey = `${payerCode}_${payeeCountry}_${paymentType}`;
+                const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
+
+                const result = {
+                    payerName: payerNameTemp,
+                    payerCode,
+                    rate: treatyRate,
+                    hasTreaty: !!TAX_DATA.withholding[treatyKey]
+                };
+
+                // If bidirectional, also get reverse rate
+                if (bidirectionalEnabled) {
+                    const reverseTreatyKey = `${payeeCountry}_${payerCode}_${paymentType}`;
+                    const reverseRate = TAX_DATA.withholding[reverseTreatyKey] || getDefaultWHTRate(paymentType);
+                    result.reverseRate = reverseRate;
+                    result.hasReverseTreaty = !!TAX_DATA.withholding[reverseTreatyKey];
+                }
+
+                results.push(result);
+            }
+
+            // Add to history
+            addToHistory({
+                type: 'batch',
+                title: `Batch WHT: ${multipleCountries.length} countries → ${payeeName} (${paymentType})`,
+                payeeCode: payeeCountry,
+                payeeName,
+                payerCodes: multipleCountries,
+                paymentType,
+                bidirectional: bidirectionalEnabled
+            });
+
+            // Display batch results
+            displayBatchResults(payeeName, payeeCountry, paymentType, results, bidirectionalEnabled, 'one-payee');
         }
-
-        // Add to history
-        addToHistory({
-            type: 'batch',
-            title: `Batch WHT: ${payerName} → ${payeeCountries.length} countries (${paymentType})`,
-            payerCode: payerCountry,
-            payerName,
-            payeeCodes: payeeCountries,
-            paymentType,
-            bidirectional: bidirectionalEnabled
-        });
-
-        // Display batch results
-        displayBatchResults(payerName, payerCountry, paymentType, results, bidirectionalEnabled);
     } catch (error) {
         console.error('Error in batch query:', error);
         alert('Error in batch query. Please try again.');
@@ -1160,7 +1264,7 @@ async function queryBatchWithholdingTax() {
 }
 
 // Display Batch Results
-function displayBatchResults(payerName, payerCode, paymentType, results, bidirectional = false) {
+function displayBatchResults(singleName, singleCode, paymentType, results, bidirectional = false, direction = 'one-payer') {
     const resultsContainer = document.getElementById('withholding-tax-results');
     const contentDiv = document.getElementById('withholding-tax-content');
     const sourceSection = document.getElementById('source-verification');
@@ -1172,90 +1276,165 @@ function displayBatchResults(payerName, payerCode, paymentType, results, bidirec
         return aNum - bNum;
     });
 
+    const directionLabel = direction === 'one-payer' ? 
+        `One Payer (${singleName}) → Multiple Payees` : 
+        `Multiple Payers → One Payee (${singleName})`;
+
     let html = `
         <div class="alert alert-info" style="margin-bottom: 20px;">
-            <strong>Batch Comparison:</strong> Withholding tax rates for ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)} payments
-            ${bidirectional ? ' (Bidirectional)' : ''}
+            <strong>Batch Comparison:</strong> ${directionLabel}<br>
+            <strong>Payment Type:</strong> ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}
+            ${bidirectional ? ' <span style="color: #28a745;">(Bidirectional Comparison Enabled)</span>' : ''}
         </div>
     `;
 
     if (bidirectional) {
         // Bidirectional table format
         html += `<table class="bidirectional-table">`;
-        html += `
-            <thead>
-                <tr>
-                    <th>Country</th>
-                    <th>${payerName} → Country</th>
-                    <th>Country → ${payerName}</th>
-                    <th>Difference</th>
-                </tr>
-            </thead>
-            <tbody>
-        `;
-
-        results.forEach(result => {
-            const forwardRate = result.rate;
-            const backwardRate = result.reverseRate;
-            
-            // Calculate difference
-            const forwardNum = parseFloat(forwardRate.replace(/[^0-9.]/g, '')) || 0;
-            const backwardNum = parseFloat(backwardRate.replace(/[^0-9.]/g, '')) || 0;
-            const diff = backwardNum - forwardNum;
-            const diffStr = diff > 0 ? `+${diff}%` : `${diff}%`;
-            
-            // Determine rate cell class
-            let forwardClass = 'rate-forward';
-            let backwardClass = 'rate-backward';
-            if (forwardNum === backwardNum) {
-                backwardClass = 'rate-same';
-            }
-
+        
+        if (direction === 'one-payer') {
             html += `
-                <tr>
-                    <td class="country-cell">${result.payeeName}</td>
-                    <td class="${forwardClass}">${forwardRate}</td>
-                    <td class="${backwardClass}">${backwardRate}</td>
-                    <td style="font-weight: 600; color: ${diff > 0 ? '#28a745' : diff < 0 ? '#dc3545' : '#6c757d'};">${diffStr}</td>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>Payee Country</th>
+                        <th>${singleName} → Payee</th>
+                        <th>Payee → ${singleName}</th>
+                        <th>Difference</th>
+                    </tr>
+                </thead>
+                <tbody>
             `;
-        });
+
+            results.forEach(result => {
+                const forwardRate = result.rate;
+                const backwardRate = result.reverseRate;
+                
+                // Calculate difference
+                const forwardNum = parseFloat(forwardRate.replace(/[^0-9.]/g, '')) || 0;
+                const backwardNum = parseFloat(backwardRate.replace(/[^0-9.]/g, '')) || 0;
+                const diff = backwardNum - forwardNum;
+                const diffStr = diff > 0 ? `+${diff}%` : `${diff}%`;
+                
+                // Determine rate cell class
+                let forwardClass = 'rate-forward';
+                let backwardClass = 'rate-backward';
+                if (forwardNum === backwardNum) {
+                    backwardClass = 'rate-same';
+                }
+
+                html += `
+                    <tr>
+                        <td class="country-cell">${result.payeeName}</td>
+                        <td class="${forwardClass}">${forwardRate}</td>
+                        <td class="${backwardClass}">${backwardRate}</td>
+                        <td style="font-weight: 600; color: ${diff > 0 ? '#28a745' : diff < 0 ? '#dc3545' : '#6c757d'};">${diffStr}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            // One Payee (multiple payers)
+            html += `
+                <thead>
+                    <tr>
+                        <th>Payer Country</th>
+                        <th>Payer → ${singleName}</th>
+                        <th>${singleName} → Payer</th>
+                        <th>Difference</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            results.forEach(result => {
+                const forwardRate = result.rate;
+                const backwardRate = result.reverseRate;
+                
+                // Calculate difference
+                const forwardNum = parseFloat(forwardRate.replace(/[^0-9.]/g, '')) || 0;
+                const backwardNum = parseFloat(backwardRate.replace(/[^0-9.]/g, '')) || 0;
+                const diff = backwardNum - forwardNum;
+                const diffStr = diff > 0 ? `+${diff}%` : `${diff}%`;
+                
+                // Determine rate cell class
+                let forwardClass = 'rate-forward';
+                let backwardClass = 'rate-backward';
+                if (forwardNum === backwardNum) {
+                    backwardClass = 'rate-same';
+                }
+
+                html += `
+                    <tr>
+                        <td class="country-cell">${result.payerName}</td>
+                        <td class="${forwardClass}">${forwardRate}</td>
+                        <td class="${backwardClass}">${backwardRate}</td>
+                        <td style="font-weight: 600; color: ${diff > 0 ? '#28a745' : diff < 0 ? '#dc3545' : '#6c757d'};">${diffStr}</td>
+                    </tr>
+                `;
+            });
+        }
 
         html += `</tbody></table>`;
         
         html += `
             <div class="alert alert-info" style="margin-top: 15px;">
                 <strong>Legend:</strong>
-                <span style="margin-left: 15px; padding: 2px 8px; background: #d4edda; border-radius: 4px;">Green: ${payerName} → Payee</span>
-                <span style="margin-left: 10px; padding: 2px 8px; background: #cce5ff; border-radius: 4px;">Blue: Payee → ${payerName}</span>
+                <span style="margin-left: 15px; padding: 2px 8px; background: #d4edda; border-radius: 4px;">Green: Forward Rate</span>
+                <span style="margin-left: 10px; padding: 2px 8px; background: #cce5ff; border-radius: 4px;">Blue: Reverse Rate</span>
             </div>
         `;
     } else {
         // Original single-direction table
         html += `<table class="batch-results-table">`;
-        html += `
-            <thead>
-                <tr>
-                    <th>Payee Country</th>
-                    <th>WHT Rate</th>
-                    <th>Treaty Status</th>
-                </tr>
-            </thead>
-            <tbody>
-        `;
-
-        results.forEach(result => {
-            const badgeClass = result.hasTreaty ? 'badge-match' : 'badge-partial';
-            const badgeText = result.hasTreaty ? 'Treaty Rate' : 'Default Rate';
-
+        
+        if (direction === 'one-payer') {
             html += `
-                <tr>
-                    <td>${result.payeeName}</td>
-                    <td class="rate-cell">${result.rate}</td>
-                    <td><span class="comparison-badge ${badgeClass}">${badgeText}</span></td>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>Payee Country</th>
+                        <th>WHT Rate</th>
+                        <th>Treaty Status</th>
+                    </tr>
+                </thead>
+                <tbody>
             `;
-        });
+
+            results.forEach(result => {
+                const badgeClass = result.hasTreaty ? 'badge-match' : 'badge-partial';
+                const badgeText = result.hasTreaty ? 'Treaty Rate' : 'Default Rate';
+
+                html += `
+                    <tr>
+                        <td>${result.payeeName}</td>
+                        <td class="rate-cell">${result.rate}</td>
+                        <td><span class="comparison-badge ${badgeClass}">${badgeText}</span></td>
+                    </tr>
+                `;
+            });
+        } else {
+            html += `
+                <thead>
+                    <tr>
+                        <th>Payer Country</th>
+                        <th>WHT Rate</th>
+                        <th>Treaty Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            results.forEach(result => {
+                const badgeClass = result.hasTreaty ? 'badge-match' : 'badge-partial';
+                const badgeText = result.hasTreaty ? 'Treaty Rate' : 'Default Rate';
+
+                html += `
+                    <tr>
+                        <td>${result.payerName}</td>
+                        <td class="rate-cell">${result.rate}</td>
+                        <td><span class="comparison-badge ${badgeClass}">${badgeText}</span></td>
+                    </tr>
+                `;
+            });
+        }
 
         html += `</tbody></table>`;
     }
