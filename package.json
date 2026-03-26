@@ -1,0 +1,13 @@
+{
+  "name": "international-tax-website",
+  "version": "1.0.0",
+  "description": "International Tax Rate Query Website",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": ["tax", "vat", "gst", "withholding-tax", "international"],
+  "author": "",
+  "license": "MIT"
+}

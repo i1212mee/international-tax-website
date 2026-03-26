@@ -638,50 +638,114 @@ function displayBatchResults(payerName, payerCode, paymentType, results) {
     resultsContainer.style.display = 'block';
 }
 
-// Mock function to simulate web search
-// In production, this would connect to a real search API or backend service
-async function searchWebRates(query) {
-    // Simulating API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // In a real implementation, this would call a backend API
-    // which would perform actual web searches using services like:
-    // - Google Custom Search API
-    // - Bing Search API
-    // - Official tax authority websites
-    // - OECD tax database
-    // - IBFD tax research platform
-
-    // Return mock results for demonstration
-    const mockResults = [
-        {
-            title: `OECD Tax Database - ${query}`,
-            url: 'https://www.oecd.org/tax/tax-policy/',
-            snippet: 'Official OECD tax statistics and policy information for member countries.'
-        },
-        {
-            title: `Tax Treaty Information - ${query}`,
-            url: 'https://www.ibfd.org/',
-            snippet: 'International Bureau of Fiscal Documentation - comprehensive tax research.'
-        },
-        {
-            title: `Official Government Tax Authority - ${query}`,
-            url: '#',
-            snippet: 'Please visit the official tax authority website of the relevant country for the most accurate rates.'
+// Real function to call backend API for web search
+// Uses Vercel serverless function to get tax rate sources
+async function searchWebRates(query, type = 'general') {
+    try {
+        // Try to call the backend API
+        const response = await fetch(`/api/search?query=${encodeURIComponent(query)}&type=${encodeURIComponent(type)}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.results || [];
+        } else {
+            console.warn('API search failed, falling back to local data');
         }
-    ];
+    } catch (error) {
+        console.warn('API search error:', error);
+    }
+    
+    // Fallback to curated sources if API is not available
+    return getCuratedSources(query);
+}
 
-    return mockResults;
-
-    /* Real implementation would be:
-    const response = await fetch('/api/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+// Get curated tax sources based on query
+function getCuratedSources(query) {
+    const queryLower = query.toLowerCase();
+    const sources = [];
+    
+    // Extract countries from query
+    const countries = extractCountries(queryLower);
+    
+    // Always include OECD
+    sources.push({
+        title: 'OECD Tax Database',
+        url: 'https://www.oecd.org/tax/tax-policy/',
+        snippet: 'Official OECD tax statistics, tax treaty information and policy analysis for member and partner countries.',
+        type: 'official',
+        reliability: 'high'
     });
-    const data = await response.json();
-    return data.results;
-    */
+    
+    // IBFD
+    sources.push({
+        title: 'IBFD Tax Research Platform',
+        url: 'https://www.ibfd.org/',
+        snippet: 'International Bureau of Fiscal Documentation - comprehensive tax research platform with country tax guides.',
+        type: 'professional',
+        reliability: 'high'
+    });
+    
+    // KPMG Tax Rates
+    sources.push({
+        title: 'KPMG Corporate Tax Rates Table',
+        url: 'https://home.kpmg/xx/en/home/services/tax/tax-tools-and-resources/tax-rates-online.html',
+        snippet: 'KPMG\'s interactive tax rate tables showing corporate income tax, indirect tax rates by country.',
+        type: 'professional',
+        reliability: 'high'
+    });
+    
+    // PwC Worldwide Tax Summaries
+    sources.push({
+        title: 'PwC Worldwide Tax Summaries',
+        url: 'https://taxsummaries.pwc.com/',
+        snippet: 'PwC\'s comprehensive guides to corporate and individual taxes in jurisdictions worldwide.',
+        type: 'professional',
+        reliability: 'high'
+    });
+    
+    // Deloitte Tax
+    sources.push({
+        title: 'Deloitte International Tax Sources',
+        url: 'https://www.deloitte.com/global/en/services/tax.html',
+        snippet: 'Deloitte\'s international tax guides and country-specific tax information.',
+        type: 'professional',
+        reliability: 'high'
+    });
+    
+    return sources;
+}
+
+// Extract country names from query
+function extractCountries(query) {
+    const countries = [];
+    const countryPatterns = [
+        { name: 'United States', patterns: ['united states', 'usa', 'us', 'america'] },
+        { name: 'United Kingdom', patterns: ['united kingdom', 'uk', 'britain'] },
+        { name: 'China', patterns: ['china', 'chinese', 'cn'] },
+        { name: 'Japan', patterns: ['japan', 'japanese', 'jp'] },
+        { name: 'Germany', patterns: ['germany', 'german', 'de'] },
+        { name: 'France', patterns: ['france', 'french', 'fr'] },
+        { name: 'Singapore', patterns: ['singapore', 'sg'] },
+        { name: 'Hong Kong', patterns: ['hong kong', 'hk'] },
+        { name: 'India', patterns: ['india', 'indian', 'in'] },
+        { name: 'Australia', patterns: ['australia', 'australian', 'au'] },
+        { name: 'Canada', patterns: ['canada', 'canadian', 'ca'] },
+        { name: 'South Korea', patterns: ['south korea', 'korea', 'kr'] },
+        { name: 'Netherlands', patterns: ['netherlands', 'dutch', 'nl'] },
+        { name: 'Switzerland', patterns: ['switzerland', 'swiss', 'ch'] },
+        { name: 'Ireland', patterns: ['ireland', 'irish', 'ie'] },
+        { name: 'Luxembourg', patterns: ['luxembourg', 'lu'] }
+    ];
+    
+    countryPatterns.forEach(country => {
+        if (country.patterns.some(pattern => query.includes(pattern))) {
+            if (!countries.includes(country.name)) {
+                countries.push(country.name);
+            }
+        }
+    });
+    
+    return countries;
 }
 
 // Utility function to format payment type for display
