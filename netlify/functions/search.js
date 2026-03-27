@@ -175,7 +175,8 @@ exports.handler = async (event, context) => {
                 results,
                 queriedAt: new Date().toISOString(),
                 responseTime: `${responseTime}ms`,
-                source: 'PwC Tax Summaries (Real-time)'
+                source: 'PwC Tax Summaries (Real-time)',
+                disclaimer: 'Data is fetched in real-time from PwC Tax Summaries. Rates may change - always verify with official tax authorities before making decisions.'
             })
         };
     } catch (error) {
@@ -202,13 +203,11 @@ async function fetchNationalTaxFromPwC(query, type) {
     let countryName = null;
     
     // Sort keys by length (longest first) to avoid partial matches
-    // e.g., "indonesia" should match before "in" (India code)
     const sortedKeys = Object.keys(PWC_COUNTRY_MAP).sort((a, b) => b.length - a.length);
     
     for (const key of sortedKeys) {
         // Use word boundary matching for short codes
         if (key.length <= 3) {
-            // For short codes like 'in', 'id', 'us', match as whole word
             const regex = new RegExp(`\\b${key}\\b`, 'i');
             if (regex.test(queryLower)) {
                 countrySlug = PWC_COUNTRY_MAP[key];
@@ -216,22 +215,9 @@ async function fetchNationalTaxFromPwC(query, type) {
                 break;
             }
         } else {
-            // For longer names, use includes
             if (queryLower.includes(key)) {
                 countrySlug = PWC_COUNTRY_MAP[key];
                 countryName = getCanonicalCountryName(key);
-                break;
-            }
-        }
-    }
-    
-    if (!countrySlug) {
-        // Try to find country name directly
-        const words = queryLower.split(/\s+/);
-        for (const word of words) {
-            if (PWC_COUNTRY_MAP[word]) {
-                countrySlug = PWC_COUNTRY_MAP[word];
-                countryName = getCanonicalCountryName(word);
                 break;
             }
         }
@@ -253,7 +239,7 @@ async function fetchNationalTaxFromPwC(query, type) {
     const isIncomeTaxQuery = queryLower.includes('income tax') || queryLower.includes('corporate tax') || queryLower.includes('pit') || queryLower.includes('cit') || type === 'income-tax';
     const isBusinessTaxQuery = queryLower.includes('business tax') || type === 'business-tax';
     
-    // Add main overview page (always include)
+    // Add main overview page
     results.push({
         title: `PwC - ${countryName} Tax Overview`,
         url: overviewUrl,
@@ -312,15 +298,16 @@ async function fetchNationalTaxFromPwC(query, type) {
     
     // Try to fetch and parse actual data from PwC
     try {
-        const pageData = await fetchPwCPage(overviewUrl);
+        const pageData = await fetchPwCPage(quickRatesUrl);
         if (pageData) {
             const extractedRates = parseTaxRates(pageData, type);
-            if (extractedRates) {
+            if (extractedRates && Object.keys(extractedRates).length > 0) {
                 results[0].extractedData = extractedRates;
+                results[0].snippet += ` Extracted rates: CIT ${extractedRates.cit || 'N/A'}, PIT ${extractedRates.pit || 'N/A'}, VAT/GST ${extractedRates.vat || extractedRates.gst || extractedRates.sst || 'N/A'}`;
             }
         }
     } catch (e) {
-        console.log('Could not fetch PwC overview:', e.message);
+        console.log('Could not fetch PwC page:', e.message);
     }
     
     // Add official tax authority
@@ -397,9 +384,7 @@ function parseTaxRates(html, type) {
         /Standard VAT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
         /Standard GST rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
         /VAT standard rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
-        /GST standard rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
-        /Standard rate.*?VAT[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
-        /Standard rate.*?GST[^0-9]*(\d+(?:\.\d+)?)\s*%/i
+        /GST standard rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i
     ];
     for (const pattern of vatPatterns) {
         const match = cleanText.match(pattern);
@@ -425,70 +410,6 @@ function parseTaxRates(html, type) {
     }
     if (sstRates.length > 0) {
         rates.sst = sstRates.slice(0, 4).join(' / ');
-    }
-    
-    // Extract multiple VAT tiers (reduced rates, etc.)
-    const reducedVatPatterns = [
-        /Reduced VAT rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
-        /Reduced rate[^0-9]*(\d+(?:\.\d+)?)\s*%/i
-    ];
-    const reducedRates = [];
-    for (const pattern of reducedVatPatterns) {
-        const matches = cleanText.matchAll(pattern);
-        for (const match of matches) {
-            if (match[1] && !reducedRates.includes(match[1] + '%')) {
-                reducedRates.push(match[1] + '%');
-            }
-        }
-    }
-    if (reducedRates.length > 0 && rates.vat) {
-        rates.vatTiers = [rates.vat, ...reducedRates];
-    }
-    
-    // Try to extract from quick-rates tables
-    // Look for patterns like "22% 2024" or "22% (2024)"
-    const yearPattern = /(\d+(?:\.\d+)?)\s*%\s*(?:\([^)]*\))?\s*(?:202[0-9])?/g;
-    const allPercentages = [...cleanText.matchAll(yearPattern)]
-        .map(m => m[1] + '%')
-        .filter((v, i, a) => a.indexOf(v) === i) // unique
-        .slice(0, 6);
-    
-    if (allPercentages.length > 0 && Object.keys(rates).length === 0) {
-        rates.detectedRates = allPercentages;
-    }
-    
-    return Object.keys(rates).length > 0 ? rates : null;
-}
-        }
-    }
-    
-    // Extract SST (Sales and Service Tax) for Malaysia and similar
-    const sstPatterns = [
-        /Sales tax[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /Service tax[^<]*(\d+(?:\.\d+)?)\s*%?/i,
-        /SST rate[^<]*(\d+(?:\.\d+)?)\s*%?/i
-    ];
-    const sstRates = [];
-    for (const pattern of sstPatterns) {
-        const match = cleanText.match(pattern);
-        if (match) {
-            sstRates.push(match[1] + '%');
-        }
-    }
-    if (sstRates.length > 0) {
-        rates.sst = sstRates.join(' / ');
-    }
-    
-    // Try to extract all rate tiers from tables
-    const tierMatches = cleanText.matchAll(/(\d+(?:\.\d+)?)\s*%\s*([A-Za-z\s]+)/g);
-    const allTiers = [];
-    for (const match of tierMatches) {
-        if (match[1] && match[2]) {
-            allTiers.push({ rate: match[1] + '%', type: match[2].trim() });
-        }
-    }
-    if (allTiers.length > 0 && !rates.vat) {
-        rates.tiers = allTiers.slice(0, 5); // Limit to 5 tiers
     }
     
     return Object.keys(rates).length > 0 ? rates : null;
@@ -542,14 +463,30 @@ async function fetchWHTFromPwC(payerCountry, payeeCountry, paymentType) {
     results.push({
         title: `PwC - ${formatCountryName(payerCountry)} Withholding Taxes`,
         url: payerWhtUrl,
-        snippet: `Official PwC tax summary for ${formatCountryName(payerCountry)} - WHT rates on dividends, interest, royalties paid to non-residents. Includes treaty rates with ${formatCountryName(payeeCountry)}.`,
+        snippet: `Official PwC tax summary for ${formatCountryName(payerCountry)} - WHT rates on dividends, interest, royalties paid to non-residents.`,
         type: 'professional',
         reliability: 'high',
         source: 'PwC Tax Summaries',
         isDirectPage: true
     });
     
-    // Add payee country WHT page (for treaty verification)
+    // Try to fetch actual WHT data
+    try {
+        const whtData = await fetchPwCPage(payerWhtUrl);
+        if (whtData) {
+            const whtInfo = parseWHTPage(whtData, payeeCountry, paymentType);
+            if (whtInfo) {
+                results[0].extractedData = whtInfo;
+                if (whtInfo.domesticRate) {
+                    results[0].snippet += ` Domestic rate: ${whtInfo.domesticRate}`;
+                }
+            }
+        }
+    } catch (e) {
+        console.log('Could not fetch WHT page:', e.message);
+    }
+    
+    // Add payee country WHT page
     results.push({
         title: `PwC - ${formatCountryName(payeeCountry)} Withholding Taxes`,
         url: payeeWhtUrl,
@@ -560,26 +497,11 @@ async function fetchWHTFromPwC(payerCountry, payeeCountry, paymentType) {
         isDirectPage: true
     });
     
-    // Try to fetch actual content from PwC
-    try {
-        const payerData = await fetchPwCPage(payerWhtUrl);
-        if (payerData) {
-            // Parse WHT table to extract relevant rate
-            const whtInfo = parseWHTTable(payerData, payeeCountry, paymentType);
-            if (whtInfo) {
-                results[0].extractedData = whtInfo;
-                results[0].snippet = whtInfo.summary;
-            }
-        }
-    } catch (e) {
-        console.log('Could not fetch PwC page:', e.message);
-    }
-    
-    // Add country overview pages
+    // Add overview pages
     results.push({
         title: `PwC - ${formatCountryName(payerCountry)} Tax Overview`,
         url: payerOverviewUrl,
-        snippet: `Comprehensive tax overview for ${formatCountryName(payerCountry)} including CIT, PIT, VAT/GST rates.`,
+        snippet: `Comprehensive tax overview for ${formatCountryName(payerCountry)}.`,
         type: 'professional',
         reliability: 'high',
         source: 'PwC Tax Summaries'
@@ -588,7 +510,7 @@ async function fetchWHTFromPwC(payerCountry, payeeCountry, paymentType) {
     results.push({
         title: `PwC - ${formatCountryName(payeeCountry)} Tax Overview`,
         url: payeeOverviewUrl,
-        snippet: `Comprehensive tax overview for ${formatCountryName(payeeCountry)} including CIT, PIT, VAT/GST rates.`,
+        snippet: `Comprehensive tax overview for ${formatCountryName(payeeCountry)}.`,
         type: 'professional',
         reliability: 'high',
         source: 'PwC Tax Summaries'
@@ -611,6 +533,82 @@ async function fetchWHTFromPwC(payerCountry, payeeCountry, paymentType) {
     if (payeeOfficial) results.push(payeeOfficial);
     
     return results;
+}
+
+// Parse WHT page to extract rates
+function parseWHTPage(html, payeeCountry, paymentType) {
+    const cleanText = html
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    const payeeLower = payeeCountry.toLowerCase();
+    const result = {};
+    
+    // Look for domestic rates first
+    const domesticPatterns = {
+        'dividends': [
+            /Dividends[^0-9]*(?:domestic|non-treaty)[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+            /Dividends paid[^0-9]*(\d+(?:\.\d+)?)\s*%/i
+        ],
+        'interest': [
+            /Interest[^0-9]*(?:domestic|non-treaty)[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+            /Interest paid[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+            /No WHT on interest/i
+        ],
+        'royalties': [
+            /Royalties[^0-9]*(?:domestic|non-treaty)[^0-9]*(\d+(?:\.\d+)?)\s*%/i,
+            /Royalties paid[^0-9]*(\d+(?:\.\d+)?)\s*%/i
+        ]
+    };
+    
+    // Extract domestic rates
+    if (paymentType === 'dividends' || !paymentType) {
+        for (const pattern of domesticPatterns.dividends) {
+            const match = cleanText.match(pattern);
+            if (match) {
+                result.dividendsDomestic = match[1] ? match[1] + '%' : '0%';
+                break;
+            }
+        }
+    }
+    
+    if (paymentType === 'interest' || !paymentType) {
+        for (const pattern of domesticPatterns.interest) {
+            const match = cleanText.match(pattern);
+            if (match) {
+                if (pattern.source.includes('No WHT')) {
+                    result.interestDomestic = '0% (No WHT on interest)';
+                } else if (match[1]) {
+                    result.interestDomestic = match[1] + '%';
+                }
+                break;
+            }
+        }
+    }
+    
+    if (paymentType === 'royalties' || !paymentType) {
+        for (const pattern of domesticPatterns.royalties) {
+            const match = cleanText.match(pattern);
+            if (match && match[1]) {
+                result.royaltiesDomestic = match[1] + '%';
+                break;
+            }
+        }
+    }
+    
+    // Check for treaty scope limitations
+    if (cleanText.toLowerCase().includes('shipping and air transport') || 
+        cleanText.toLowerCase().includes('only shipping') ||
+        cleanText.toLowerCase().includes('only air transport')) {
+        result.treatyScopeLimited = true;
+        result.treatyScopeNote = 'Treaty covers only shipping and air transport activities';
+    }
+    
+    return Object.keys(result).length > 0 ? result : null;
 }
 
 // Fetch PwC page content
@@ -637,81 +635,6 @@ async function fetchPwCPage(url) {
     }
 }
 
-// Parse WHT table from PwC HTML
-function parseWHTTable(html, payeeCountry, paymentType) {
-    // This is a simplified parser - in production would need more robust parsing
-    const payeeLower = payeeCountry.toLowerCase();
-    const payeePatterns = {
-        'hong kong': ['hong kong', 'hong kong sar', 'hk'],
-        'singapore': ['singapore', 'sg'],
-        'china': ['china', "people's republic of china", 'prc'],
-        'united states': ['united states', 'usa', 'us'],
-        'united kingdom': ['united kingdom', 'uk', 'britain'],
-        'japan': ['japan', 'jp'],
-        'germany': ['germany', 'de'],
-        'france': ['france', 'fr']
-    };
-    
-    // Find matching patterns
-    const patterns = payeePatterns[payeeLower] || [payeeLower];
-    
-    // Look for table rows containing the country name
-    const tableRegex = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
-    const rows = html.match(tableRegex) || [];
-    
-    for (const row of rows) {
-        const rowLower = row.toLowerCase();
-        if (patterns.some(p => rowLower.includes(p))) {
-            // Found a matching row, extract rates
-            const rates = extractRatesFromRow(row, paymentType);
-            if (rates) {
-                return {
-                    country: payeeCountry,
-                    rates: rates,
-                    summary: `${payeeCountry}: Dividends ${rates.dividends || 'N/A'}, Interest ${rates.interest || 'N/A'}, Royalties ${rates.royalties || 'N/A'}`
-                };
-            }
-        }
-    }
-    
-    // Check for treaty scope limitations
-    if (html.toLowerCase().includes('shipping and air transport') || 
-        html.toLowerCase().includes('only shipping') ||
-        html.toLowerCase().includes('only air transport')) {
-        return {
-            country: payeeCountry,
-            rates: { dividends: 'Treaty limited', interest: 'Treaty limited', royalties: 'Treaty limited' },
-            treatyScope: 'limited',
-            summary: `Treaty with ${payeeCountry} covers only shipping and air transport activities. Domestic rates may apply for other payments.`
-        };
-    }
-    
-    return null;
-}
-
-// Extract rates from table row
-function extractRatesFromRow(row, paymentType) {
-    // Extract numbers that look like tax rates (0-100 with optional %)
-    const rateRegex = /(\d+(?:\.\d+)?)\s*(?:%|percent)/gi;
-    const numbers = row.match(rateRegex) || [];
-    
-    // Look for specific payment type indicators
-    const hasDividend = /dividend/i.test(row);
-    const hasInterest = /interest/i.test(row);
-    const hasRoyalty = /royalt/i.test(row);
-    
-    // Simple extraction - would need more sophisticated parsing for production
-    if (numbers.length >= 3) {
-        return {
-            dividends: numbers[0] || '0%',
-            interest: numbers[1] || '0%',
-            royalties: numbers[2] || '0%'
-        };
-    }
-    
-    return null;
-}
-
 // General search function
 async function searchGeneral(query, type) {
     const results = [];
@@ -722,7 +645,7 @@ async function searchGeneral(query, type) {
         results.push({
             title: 'PwC - Worldwide WHT Rates Quick Chart',
             url: `${PWC_BASE_URL}/quick-charts/withholding-tax-wht-rates`,
-            snippet: 'Comprehensive table of withholding tax rates for all countries - dividends, interest, royalties for residents and non-residents.',
+            snippet: 'Comprehensive table of withholding tax rates for all countries.',
             type: 'professional',
             reliability: 'high',
             source: 'PwC Tax Summaries',
@@ -737,24 +660,13 @@ async function searchGeneral(query, type) {
             results.push({
                 title: `PwC - ${formatCountryName(country)} Tax Summary`,
                 url: `${PWC_BASE_URL}/${slug}`,
-                snippet: `Comprehensive tax information for ${formatCountryName(country)} including corporate tax, individual tax, VAT/GST, and withholding taxes.`,
+                snippet: `Comprehensive tax information for ${formatCountryName(country)}.`,
                 type: 'professional',
                 reliability: 'high',
                 source: 'PwC Tax Summaries',
                 isDirectPage: true
             });
             
-            results.push({
-                title: `PwC - ${formatCountryName(country)} Withholding Taxes`,
-                url: `${PWC_BASE_URL}/${slug}/corporate/withholding-taxes`,
-                snippet: `Detailed WHT rates for ${formatCountryName(country)} - domestic rates and treaty rates with other countries.`,
-                type: 'professional',
-                reliability: 'high',
-                source: 'PwC Tax Summaries',
-                isDirectPage: true
-            });
-            
-            // Add official source
             const official = getOfficialTaxAuthority(country);
             if (official) results.push(official);
         }
@@ -770,24 +682,16 @@ async function searchGeneral(query, type) {
         source: 'OECD'
     });
     
-    results.push({
-        title: 'OECD Tax Treaties and MLI',
-        url: 'https://www.oecd.org/tax/treaties/',
-        snippet: 'Tax treaty database and MLI positions.',
-        type: 'official',
-        reliability: 'high',
-        source: 'OECD'
-    });
-    
     return results.slice(0, 10);
 }
 
 // Extract country names from query
 function extractCountries(query) {
     const countries = [];
-    for (const [key] of Object.entries(PWC_COUNTRY_MAP)) {
-        if (query.includes(key) && !countries.some(c => c.toLowerCase() === key)) {
-            // Get the canonical country name
+    const sortedKeys = Object.keys(PWC_COUNTRY_MAP).sort((a, b) => b.length - a.length);
+    
+    for (const key of sortedKeys) {
+        if (query.includes(key)) {
             const canonicalName = getCanonicalCountryName(key);
             if (canonicalName && !countries.includes(canonicalName)) {
                 countries.push(canonicalName);
@@ -865,7 +769,7 @@ function getOfficialTaxAuthority(country) {
         'Hong Kong': {
             title: 'HK IRD - Inland Revenue Department',
             url: 'https://www.ird.gov.hk/',
-            snippet: 'Official Hong Kong tax authority - tax rates, DTA information and e-services.',
+            snippet: 'Official Hong Kong tax authority.',
             type: 'official',
             reliability: 'high',
             source: 'Government'
@@ -873,7 +777,7 @@ function getOfficialTaxAuthority(country) {
         'Singapore': {
             title: 'IRAS - Inland Revenue Authority of Singapore',
             url: 'https://www.iras.gov.sg/',
-            snippet: 'Official Singapore tax authority - tax rates, treaty information and e-services.',
+            snippet: 'Official Singapore tax authority.',
             type: 'official',
             reliability: 'high',
             source: 'Government'
@@ -929,7 +833,7 @@ function getOfficialTaxAuthority(country) {
         'Indonesia': {
             title: 'Direktorat Jenderal Pajak (DJP)',
             url: 'https://pajak.go.id/',
-            snippet: 'Official Indonesian tax authority - Directorate General of Taxes.',
+            snippet: 'Official Indonesian tax authority.',
             type: 'official',
             reliability: 'high',
             source: 'Government'

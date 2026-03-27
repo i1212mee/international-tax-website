@@ -408,10 +408,10 @@ function renderHistoryList() {
                 <div class="item-actions">
                     <button class="item-btn bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" 
                             onclick="toggleBookmark(${item.id})" title="${isBookmarked ? 'Remove bookmark' : 'Add bookmark'}">
-                        ${isBookmarked ? '‚òÖ' : '‚òÜ'}
+                        ${isBookmarked ? '‚ò? : '‚ò?}
                     </button>
                     <button class="item-btn delete-btn" onclick="deleteHistoryItem(${item.id})" title="Delete">
-                        ‚úï
+                        ‚ú?
                     </button>
                 </div>
             </div>
@@ -534,8 +534,8 @@ function renderBookmarksList() {
     if (bookmarks.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">‚≠ê</div>
-                <p>No bookmarks yet. Click ‚òÜ to bookmark a query.</p>
+                <div class="icon">‚≠?/div>
+                <p>No bookmarks yet. Click ‚ò?to bookmark a query.</p>
             </div>
         `;
         return;
@@ -551,7 +551,7 @@ function renderBookmarksList() {
                 </div>
                 <div class="item-actions">
                     <button class="item-btn delete-btn" onclick="deleteBookmark(${item.id})" title="Remove bookmark">
-                        ‚úï
+                        ‚ú?
                     </button>
                 </div>
             </div>
@@ -892,7 +892,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
     if (webResults && webResults.length > 0) {
         html += `<div class="source-section">`;
         html += `<div class="realtime-indicator">`;
-        html += `<span class="live-badge">‚óè LIVE</span>`;
+        html += `<span class="live-badge">‚ó?LIVE</span>`;
         html += `<span class="query-time">Queried at: ${queryTime}</span>`;
         html += `<span class="search-duration">Response time: ${searchDuration}ms</span>`;
         html += `</div>`;
@@ -903,7 +903,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
             const reliabilityBadge = result.reliability === 'high' ? 
                 '<span class="reliability-badge high">Official/Professional</span>' : 
                 '<span class="reliability-badge medium">Reference</span>';
-            const typeIcon = result.type === 'official' ? 'üèõÔ∏è' : 
+            const typeIcon = result.type === 'official' ? 'üèõÔ∏? : 
                             result.type === 'professional' ? 'üíº' : 'üìñ';
             
             html += `<div class="source-item verified">`;
@@ -1027,15 +1027,19 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
         hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
     
+    // Handle domesticRate as object {rate, note} or string (backward compatible)
+    const domesticRateValue = typeof domesticRate === 'object' ? domesticRate.rate : domesticRate;
+    const domesticRateNote = typeof domesticRate === 'object' ? domesticRate.note : 'Standard WHT rate';
+    
     // Calculate applicable rate
-    let domesticRateNum = parseFloat(String(domesticRate).replace(/[^0-9.]/g, '')) || 0;
+    let domesticRateNum = parseFloat(String(domesticRateValue).replace(/[^0-9.]/g, '')) || 0;
     let treatyRateNum = parseFloat(String(treatyRate).replace(/[^0-9.]/g, '')) || 0;
     
     let applicableRate = treatyRate;
     let applicableNote = '';
     
     if (domesticRateNum > 0 && (treatyRateNum === 0 || domesticRateNum < treatyRateNum)) {
-        applicableRate = domesticRate;
+        applicableRate = domesticRateValue;
         applicableNote = 'Domestic rate applies (lower than treaty rate)';
     } else if (treatyRateNum > 0 && treatyRateNum <= domesticRateNum) {
         applicableRate = treatyRate;
@@ -1044,7 +1048,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
         applicableRate = '0%';
         applicableNote = 'No WHT applicable';
     } else if (!hasTreaty) {
-        applicableRate = domesticRate;
+        applicableRate = domesticRateValue;
         applicableNote = 'No treaty - domestic rate applies';
     }
     
@@ -1055,10 +1059,10 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Section 1: Domestic WHT Rate (Non-Treaty)
     html += '<div class="wht-section domestic-section" style="margin: 15px 0; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">';
-    html += '<div class="section-header" style="font-weight: bold; color: #e65100; margin-bottom: 8px;"><span>üèõÔ∏è Section 1: Domestic WHT Rate (Non-Treaty)</span></div>';
+    html += '<div class="section-header" style="font-weight: bold; color: #e65100; margin-bottom: 8px;"><span>üèõÔ∏?Section 1: Domestic WHT Rate (Non-Treaty)</span></div>';
     html += '<div class="section-desc" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">WHT rate under ' + payerName + ' domestic tax law, without considering any Double Tax Treaty</div>';
-    html += '<div class="rate-display" style="font-size: 1.8em; font-weight: bold; color: #e65100;">' + domesticRate + '</div>';
-    html += '<div class="rate-label" style="font-size: 0.85em; color: #666;">' + payerName + ' statutory WHT rate for ' + paymentType + '</div>';
+    html += '<div class="rate-display" style="font-size: 1.8em; font-weight: bold; color: #e65100;">' + domesticRateValue + '</div>';
+    html += '<div class="rate-label" style="font-size: 0.85em; color: #666;">' + domesticRateNote + '</div>';
     html += '</div>';
     
     // Section 2: Treaty WHT Rate
@@ -1078,7 +1082,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Applicable Rate
     html += '<div class="wht-section applicable-section" style="margin: 15px 0; padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">';
-    html += '<div class="section-header" style="font-weight: bold; color: #2e7d32; margin-bottom: 8px;"><span>‚úÖ Applicable Rate</span></div>';
+    html += '<div class="section-header" style="font-weight: bold; color: #2e7d32; margin-bottom: 8px;"><span>‚ú?Applicable Rate</span></div>';
     html += '<div class="rate-display" style="font-size: 2em; font-weight: bold; color: #2e7d32;">' + applicableRate + '</div>';
     html += '<div class="rate-label" style="font-size: 0.85em; color: #666;">' + applicableNote + '</div>';
     html += '</div>';
@@ -1092,7 +1096,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Live indicator
     html += '<div class="live-indicator" style="margin-top: 15px; padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 0.85em;">';
-    html += '<span class="live-badge">‚óè LIVE</span> Queried at: ' + queryTime;
+    html += '<span class="live-badge">‚ó?LIVE</span> Queried at: ' + queryTime;
     if (searchDuration) html += ' | Response time: ' + searchDuration + 'ms';
     html += '</div>';
     
