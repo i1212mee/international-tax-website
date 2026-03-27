@@ -380,7 +380,7 @@ function renderHistoryList() {
     if (history.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">üìú</div>
+                <div class="icon">??</div>
                 <p>No query history yet</p>
             </div>
         `;
@@ -408,10 +408,10 @@ function renderHistoryList() {
                 <div class="item-actions">
                     <button class="item-btn bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" 
                             onclick="toggleBookmark(${item.id})" title="${isBookmarked ? 'Remove bookmark' : 'Add bookmark'}">
-                        ${isBookmarked ? '‚òÖ' : '‚òÜ'}
+                        ${isBookmarked ? '°Ô' : '°Ó'}
                     </button>
                     <button class="item-btn delete-btn" onclick="deleteHistoryItem(${item.id})" title="Delete">
-                        ‚úï
+                        ?
                     </button>
                 </div>
             </div>
@@ -534,8 +534,8 @@ function renderBookmarksList() {
     if (bookmarks.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">‚≠ê</div>
-                <p>No bookmarks yet. Click ‚òÜ to bookmark a query.</p>
+                <div class="icon">?</div>
+                <p>No bookmarks yet. Click °Ó to bookmark a query.</p>
             </div>
         `;
         return;
@@ -551,7 +551,7 @@ function renderBookmarksList() {
                 </div>
                 <div class="item-actions">
                     <button class="item-btn delete-btn" onclick="deleteBookmark(${item.id})" title="Remove bookmark">
-                        ‚úï
+                        ?
                     </button>
                 </div>
             </div>
@@ -809,7 +809,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
                     // If we have real-time extracted VAT/GST rate, show it first
                     if (extractedData && extractedData.vat) {
                         html += `<div class="real-time-indicator">
-                            <span class="live-badge">‚óè LIVE</span>
+                            <span class="live-badge">°Ò LIVE</span>
                             <span class="real-time-rate">Real-time rate from PwC: <strong>${extractedData.vat}</strong></span>
                         </div>`;
                     }
@@ -925,7 +925,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
     if (webResults && webResults.length > 0) {
         html += `<div class="source-section">`;
         html += `<div class="realtime-indicator">`;
-        html += `<span class="live-badge">‚óè LIVE</span>`;
+        html += `<span class="live-badge">°Ò LIVE</span>`;
         html += `<span class="query-time">Queried at: ${queryTime}</span>`;
         html += `<span class="search-duration">Response time: ${searchDuration}ms</span>`;
         html += `</div>`;
@@ -936,8 +936,8 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
             const reliabilityBadge = result.reliability === 'high' ? 
                 '<span class="reliability-badge high">Official/Professional</span>' : 
                 '<span class="reliability-badge medium">Reference</span>';
-            const typeIcon = result.type === 'official' ? 'üèõÔ∏è' : 
-                            result.type === 'professional' ? 'üíº' : 'üìñ';
+            const typeIcon = result.type === 'official' ? '???' : 
+                            result.type === 'professional' ? '??' : '??';
             
             html += `<div class="source-item verified">`;
             html += `<div class="source-header">`;
@@ -955,6 +955,44 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
     resultsContainer.style.display = 'block';
 }
 
+// Get domestic WHT rate (non-treaty rate) for a country
+function getDomesticWHTRate(countryCode, paymentType) {
+    if (TAX_DATA.domesticWHT && TAX_DATA.domesticWHT[countryCode]) {
+        const countryRates = TAX_DATA.domesticWHT[countryCode];
+        if (countryRates[paymentType] !== undefined) {
+            return {
+                rate: countryRates[paymentType],
+                hasDomesticRate: true,
+                note: countryRates.note || null
+            };
+        }
+    }
+    // Return default if no domestic rate found
+    return {
+        rate: getDefaultWHTRate(paymentType),
+        hasDomesticRate: false,
+        note: 'Domestic rate not available in database'
+    };
+}
+// Get domestic WHT rate (non-treaty rate) for a country
+function getDomesticWHTRate(countryCode, paymentType) {
+    if (TAX_DATA.domesticWHT && TAX_DATA.domesticWHT[countryCode]) {
+        const countryRates = TAX_DATA.domesticWHT[countryCode];
+        if (countryRates[paymentType] !== undefined) {
+            return {
+                rate: countryRates[paymentType],
+                hasDomesticRate: true,
+                note: countryRates.note || null
+            };
+        }
+    }
+    // Return default if no domestic rate found
+    return {
+        rate: getDefaultWHTRate(paymentType),
+        hasDomesticRate: false,
+        note: 'Domestic rate not available in database'
+    };
+}
 // Query Withholding Tax Rate
 async function queryWithholdingTax() {
     const payerCountry = document.getElementById('payer-country').value;
@@ -994,7 +1032,7 @@ async function queryWithholdingTax() {
         // Add to history
         addToHistory({
             type: 'wht',
-            title: `WHT: ${payerName} ‚Üí ${payeeName} (${paymentType})`,
+            title: `WHT: ${payerName} °˙ ${payeeName} (${paymentType})`,
             payerCode: payerCountry,
             payerName,
             payeeCode: payeeCountry,
@@ -1006,7 +1044,7 @@ async function queryWithholdingTax() {
         displayWithholdingTaxResults(
             payerName, payerCountry,
             payeeName, payeeCountry,
-            paymentType, treatyRate,
+            paymentType, domesticRate, treatyRate, hasTreaty,
             webResults, searchDuration
         );
     } catch (error) {
@@ -1017,122 +1055,170 @@ async function queryWithholdingTax() {
     }
 }
 
-// Display Withholding Tax Results
+// Get domestic WHT rate for a country
+function getDomesticWHTRate(countryCode, paymentType) {
+    if (typeof TAX_DATA !== 'undefined' && TAX_DATA.domesticWHT && TAX_DATA.domesticWHT[countryCode]) {
+        const domestic = TAX_DATA.domesticWHT[countryCode];
+        const type = paymentType.toLowerCase();
+        
+        if (domestic[type] !== undefined) {
+            return domestic[type];
+        }
+    }
+    
+    // Default domestic rates if not found
+    const defaults = {
+        'interest': 'Standard rate applies',
+        'dividend': 'Standard rate applies', 
+        'royalty': 'Standard rate applies',
+        'technical': 'Standard rate applies',
+        'management': 'Standard rate applies'
+    };
+    
+    return defaults[paymentType.toLowerCase()] || 'Standard rate applies';
+}
+
+// Display Withholding Tax Results with Two Sections
 function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode, paymentType, treatyRate, webResults, searchDuration) {
     const resultsContainer = document.getElementById('withholding-tax-results');
-    const contentDiv = document.getElementById('withholding-tax-content');
-    const sourceSection = document.getElementById('source-verification');
+    const contentDiv = document.getElementById('withholding-tax-content');      
+    const sourceSection = document.getElementById('source-verification');       
     const sourceList = document.getElementById('source-list');
     const verificationResult = document.getElementById('cross-verification-result');
-    
-    const queryTime = new Date().toLocaleString('en-US', { 
+
+    const queryTime = new Date().toLocaleString('en-US', {
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        year: 'numeric', 
-        month: 'short', 
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
     });
 
-    // Main result card
-    let html = `<div class="tax-result-card">`;
-    html += `<div class="tax-type">Withholding Tax Rate</div>`;
-    html += `<div class="country-name">${payerName} ‚Üí ${payeeName}</div>`;
-    html += `<div class="tax-type" style="font-size: 0.9em; color: #6c757d; margin-top: 5px;">Payment Type: ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}</div>`;
-    html += `<div class="rate-value">${treatyRate}</div>`;
-
-    // Determine treaty status and show appropriate note
-    let noteHtml = '';
-    const treatyRateStr = String(treatyRate);
+    // Get domestic WHT rate
+    const domesticRate = getDomesticWHTRate(payerCode, paymentType);
     
-    if (treatyRateStr.includes('No Treaty') || treatyRateStr.includes('Limited Treaty')) {
-        // No applicable treaty
-        noteHtml = `<div class="alert alert-warning" style="margin-top: 15px;">`;
-        noteHtml += `<strong>Important:</strong> There is <strong>NO comprehensive Double Taxation Treaty (DTT)</strong> between ${payerName} and ${payeeName} for this type of payment. `;
-        if (payerCode === 'HK' && treatyRateStr.includes('Limited Treaty')) {
-            noteHtml += `The existing treaty only covers shipping and air transport activities. `;
-        }
-        noteHtml += `The rate shown is based on domestic law of ${payerName}. Please verify with tax authorities.`;
-        noteHtml += `</div>`;
-    } else if (treatyRateStr.includes('0%') && payerCode === 'HK') {
-        // HK specific - no WHT on interest/dividends
-        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
-        noteHtml += `<strong>Note:</strong> ${payerName} does <strong>NOT impose WHT on ${paymentType}</strong> under domestic tax law. `;
-        noteHtml += `This is a statutory exemption, not a treaty benefit. No DTT is required for this 0% rate.`;
-        noteHtml += `</div>`;
-    } else if (treatyRateStr === '0%' || treatyRateStr.includes('0% (')) {
-        // Treaty rate is 0%
-        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
-        noteHtml += `<strong>Note:</strong> This 0% rate is based on the Double Taxation Treaty (DTT) between ${payerName} and ${payeeName}. `;
-        noteHtml += `Please verify treaty conditions and obtain tax residency certificate if required.`;
-        noteHtml += `</div>`;
-    } else {
-        // Standard treaty rate
-        noteHtml = `<div class="alert alert-info" style="margin-top: 15px;">`;
-        noteHtml += `<strong>Note:</strong> This rate is based on the Double Taxation Treaty (DTT) between ${payerName} and ${payeeName}. `;
-        noteHtml += `The actual rate may vary based on specific circumstances. Please verify with tax authorities.`;
-        noteHtml += `</div>`;
+    // Parse rates for comparison
+    let domesticRateNum = parseFloat(String(domesticRate).replace(/[^0-9.]/g, '')) || 0;
+    let treatyRateNum = parseFloat(String(treatyRate).replace(/[^0-9.]/g, '')) || 0;
+    
+    // Determine applicable rate (lower of domestic or treaty)
+    let applicableRate = treatyRate;
+    let applicableNote = '';
+    
+    if (domesticRateNum > 0 && (treatyRateNum === 0 || domesticRateNum < treatyRateNum)) {
+        applicableRate = domesticRate;
+        applicableNote = 'Domestic rate applies (lower than treaty rate)';
+    } else if (treatyRateNum > 0 && treatyRateNum <= domesticRateNum) {
+        applicableRate = treatyRate;
+        applicableNote = 'Treaty rate applies';
+    } else if (treatyRateNum === 0 && domesticRateNum === 0) {
+        applicableRate = '0%';
+        applicableNote = 'No WHT applicable';
     }
+
+    // Build HTML with two sections
+    let html = `<div class="tax-result-card">`;
     
-    html += noteHtml;
+    // Header
+    html += `<div class="tax-type">Withholding Tax Analysis</div>`;
+    html += `<div class="country-name">${payerName} ‚Ü?${payeeName}</div>`;
+    html += `<div class="tax-type" style="font-size: 0.9em; color: #6c757d; margin-top: 5px;">Payment Type: ${paymentType.charAt(0).toUpperCase() + paymentType.slice(1)}</div>`;
+
+    // Section 1: Domestic Rate (Non-Treaty)
+    html += `<div class="wht-section domestic-section">`;
+    html += `<div class="section-header"><span class="section-icon">üèõÔ∏?/span> Section 1: Domestic WHT Rate (Non-Treaty)</div>`;
+    html += `<div class="section-desc">WHT rate under ${payerName}'s domestic tax law, without considering any Double Tax Treaty</div>`;
+    html += `<div class="rate-display domestic-rate">${domesticRate}</div>`;
+    html += `<div class="rate-label">${payerName}'s statutory WHT rate for ${paymentType}</div>`;
+    html += `</div>`;
+
+    // Section 2: Treaty Rate
+    html += `<div class="wht-section treaty-section">`;
+    html += `<div class="section-header"><span class="section-icon">ü§ù</span> Section 2: Treaty WHT Rate</div>`;
+    
+    const treatyRateStr = String(treatyRate);
+    if (treatyRateStr.includes('No Treaty') || treatyRateStr.includes('Limited Treaty')) {
+        html += `<div class="section-desc">No applicable Double Tax Treaty between ${payerName} and ${payeeName} for ${paymentType}</div>`;
+        html += `<div class="rate-display treaty-rate na">N/A</div>`;
+        html += `<div class="rate-label">Domestic rate applies</div>`;
+    } else {
+        html += `<div class="section-desc">WHT rate under Double Tax Treaty between ${payerName} and ${payeeName}</div>`;
+        html += `<div class="rate-display treaty-rate">${treatyRate}</div>`;
+        html += `<div class="rate-label">DTT rate for ${paymentType}</div>`;
+    }
+    html += `</div>`;
+
+    // Applicable Rate Summary
+    html += `<div class="wht-section applicable-section">`;
+    html += `<div class="section-header"><span class="section-icon">‚ú?/span> Applicable Rate</div>`;
+    html += `<div class="rate-display applicable-rate">${applicableRate}</div>`;
+    html += `<div class="rate-label">${applicableNote}</div>`;
+    html += `</div>`;
+
+    // Important Notice
+    html += `<div class="alert alert-warning" style="margin-top: 15px;">`;
+    html += `<strong>‚ö†Ô∏è Important:</strong> If the domestic rate is <strong>lower</strong> than the treaty rate, the domestic rate applies. `;
+    html += `The treaty rate is a <strong>maximum</strong> rate that the source country can withhold, not a minimum. `;
+    html += `Always verify with local tax authorities for the most accurate and up-to-date information.`;
+    html += `</div>`;
+
+    // Treaty-specific notes
+    if (treatyRateStr.includes('No Treaty') || treatyRateStr.includes('Limited Treaty')) {
+        html += `<div class="alert alert-info" style="margin-top: 10px;">`;
+        html += `<strong>‚ÑπÔ∏è Note:</strong> There is <strong>NO comprehensive Double Taxation Treaty</strong> between ${payerName} and ${payeeName} for this type of payment.`;
+        if (payerCode === 'HK' && treatyRateStr.includes('Limited Treaty')) {
+            html += ` The existing treaty only covers shipping and air transport activities.`;
+        }
+        html += ` The domestic rate of ${payerName} applies.`;
+        html += `</div>`;
+    } else if (treatyRateStr === '0%' || treatyRateStr.includes('0%')) {
+        html += `<div class="alert alert-success" style="margin-top: 10px;">`;
+        html += `<strong>‚ÑπÔ∏è Note:</strong> Treaty rate is 0% - No WHT should be withheld at source. Documentation may be required to claim this benefit.`;
+        html += `</div>`;
+    }
+
+    html += `</div>`;
+
+    // Query time indicator
+    html += `<div class="live-indicator" style="margin-top: 15px; padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 0.85em;">`;
+    html += `<span class="live-badge">‚ó?LIVE</span> Queried at: ${queryTime}`;
+    if (searchDuration) {
+        html += ` | Response time: ${searchDuration}ms`;
+    }
     html += `</div>`;
 
     contentDiv.innerHTML = html;
 
-    // Display sources with real-time indicators
+    // Display web results with sources
     if (webResults && webResults.length > 0) {
-        // Real-time indicator
-        let indicatorHtml = `
-            <div class="realtime-indicator">
-                <span class="live-badge">‚óè LIVE</span>
-                <span class="query-time">Queried at: ${queryTime}</span>
-                <span class="search-duration">Response time: ${searchDuration}ms</span>
-            </div>
-        `;
-        
-        // Source items with better formatting
-        let sourceHtml = indicatorHtml + `<p class="source-description">The following authoritative sources were queried in real-time:</p>`;
-
-        const sources = webResults.slice(0, 5);
-
-        sources.forEach((source, index) => {
-            const reliabilityBadge = source.reliability === 'high' ? 
-                '<span class="reliability-badge high">Official/Professional</span>' : 
-                '<span class="reliability-badge medium">Reference</span>';
-            const typeIcon = source.type === 'official' ? 'üèõÔ∏è' : 
-                            source.type === 'professional' ? 'üíº' : 'üìñ';
-            
-            sourceHtml += `<div class="source-item verified">`;
-            sourceHtml += `<div class="source-header">`;
-            sourceHtml += `<span class="source-number">Source ${index + 1}</span>`;
-            sourceHtml += `${reliabilityBadge}`;
-            sourceHtml += `</div>`;
-            sourceHtml += `<a href="${source.url}" target="_blank" rel="noopener">${typeIcon} ${source.title}</a>`;
-            sourceHtml += `<p class="source-snippet">${source.snippet}</p>`;
+        sourceSection.style.display = 'block';
+        let sourceHtml = '';
+        webResults.forEach((result, index) => {
+            const isOfficial = result.url.includes('gov') || result.url.includes('ird') || result.url.includes('tax');
+            sourceHtml += `<div class="source-item ${isOfficial ? 'official' : 'professional'}">`;
+            sourceHtml += `<span class="source-icon">${isOfficial ? 'üèõÔ∏? : 'üíº'}</span> `;
+            sourceHtml += `<a href="${result.url}" target="_blank" class="source-link">${result.title}</a>`;
+            sourceHtml += `<span class="source-badge ${isOfficial ? 'official' : 'professional'}">${isOfficial ? 'Official' : 'Professional'}</span>`;
             sourceHtml += `</div>`;
         });
-
         sourceList.innerHTML = sourceHtml;
-
-        // Cross-verification result
-        const verificationHtml = `
-            <div class="verification-warning">
-                <strong>Cross-Verification Recommended:</strong>
-                <p style="margin-top: 10px;">
-                    Please verify the tax rate from at least <strong>3 different sources</strong> above.
-                    Tax treaties and rates may change. Click the source links to access the original authoritative data.
-                </p>
-            </div>
-        `;
-
-        verificationResult.innerHTML = verificationHtml;
-        sourceSection.style.display = 'block';
-    } else {
-        sourceSection.style.display = 'none';
     }
 
     resultsContainer.style.display = 'block';
+    
+    // Save to history
+    saveToHistory({
+        type: 'wht',
+        payerCountry: payerName,
+        payeeCountry: payeeName,
+        paymentType: paymentType,
+        domesticRate: domesticRate,
+        treatyRate: treatyRate,
+        applicableRate: applicableRate,
+        timestamp: new Date().toISOString()
+    });
 }
 
 // Query Batch Withholding Tax Rates
@@ -1168,14 +1254,14 @@ async function queryBatchWithholdingTax() {
         const results = [];
 
         if (queryDirection === 'one-payer') {
-            // One Payer ‚Üí Multiple Payees
+            // One Payer °˙ Multiple Payees
             const payerCountry = singleCountry;
             const payerName = singleName;
 
             for (const payeeCode of multipleCountries) {
                 const payeeName = COUNTRIES.find(c => c.code === payeeCode)?.name || payeeCode;
 
-                // Get treaty rate (Payer ‚Üí Payee)
+                // Get treaty rate (Payer °˙ Payee)
                 const treatyKey = `${payerCountry}_${payeeCode}_${paymentType}`;
                 const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
 
@@ -1200,7 +1286,7 @@ async function queryBatchWithholdingTax() {
             // Add to history
             addToHistory({
                 type: 'batch',
-                title: `Batch WHT: ${payerName} ‚Üí ${multipleCountries.length} countries (${paymentType})`,
+                title: `Batch WHT: ${payerName} °˙ ${multipleCountries.length} countries (${paymentType})`,
                 payerCode: payerCountry,
                 payerName,
                 payeeCodes: multipleCountries,
@@ -1212,14 +1298,14 @@ async function queryBatchWithholdingTax() {
             displayBatchResults(payerName, payerCountry, paymentType, results, bidirectionalEnabled, 'one-payer');
 
         } else {
-            // Multiple Payers ‚Üí One Payee
+            // Multiple Payers °˙ One Payee
             const payeeCountry = singleCountry;
             const payeeName = singleName;
 
             for (const payerCode of multipleCountries) {
                 const payerNameTemp = COUNTRIES.find(c => c.code === payerCode)?.name || payerCode;
 
-                // Get treaty rate (Payer ‚Üí Payee)
+                // Get treaty rate (Payer °˙ Payee)
                 const treatyKey = `${payerCode}_${payeeCountry}_${paymentType}`;
                 const treatyRate = TAX_DATA.withholding[treatyKey] || getDefaultWHTRate(paymentType);
 
@@ -1244,7 +1330,7 @@ async function queryBatchWithholdingTax() {
             // Add to history
             addToHistory({
                 type: 'batch',
-                title: `Batch WHT: ${multipleCountries.length} countries ‚Üí ${payeeName} (${paymentType})`,
+                title: `Batch WHT: ${multipleCountries.length} countries °˙ ${payeeName} (${paymentType})`,
                 payeeCode: payeeCountry,
                 payeeName,
                 payerCodes: multipleCountries,
@@ -1277,8 +1363,8 @@ function displayBatchResults(singleName, singleCode, paymentType, results, bidir
     });
 
     const directionLabel = direction === 'one-payer' ? 
-        `One Payer (${singleName}) ‚Üí Multiple Payees` : 
-        `Multiple Payers ‚Üí One Payee (${singleName})`;
+        `One Payer (${singleName}) °˙ Multiple Payees` : 
+        `Multiple Payers °˙ One Payee (${singleName})`;
 
     let html = `
         <div class="alert alert-info" style="margin-bottom: 20px;">
@@ -1297,8 +1383,8 @@ function displayBatchResults(singleName, singleCode, paymentType, results, bidir
                 <thead>
                     <tr>
                         <th>Payee Country</th>
-                        <th>${singleName} ‚Üí Payee</th>
-                        <th>Payee ‚Üí ${singleName}</th>
+                        <th>${singleName} °˙ Payee</th>
+                        <th>Payee °˙ ${singleName}</th>
                         <th>Difference</th>
                     </tr>
                 </thead>
@@ -1337,8 +1423,8 @@ function displayBatchResults(singleName, singleCode, paymentType, results, bidir
                 <thead>
                     <tr>
                         <th>Payer Country</th>
-                        <th>Payer ‚Üí ${singleName}</th>
-                        <th>${singleName} ‚Üí Payer</th>
+                        <th>Payer °˙ ${singleName}</th>
+                        <th>${singleName} °˙ Payer</th>
                         <th>Difference</th>
                     </tr>
                 </thead>

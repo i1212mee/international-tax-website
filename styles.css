@@ -1022,3 +1022,77 @@ footer p {
     font-size: 2em;
     margin-bottom: 10px;
 }
+/* WHT Section Styles */
+.wht-section {
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+.domestic-section {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-color: #ffb74d;
+}
+
+.treaty-section {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #64b5f6;
+}
+
+.final-section {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-color: #66bb6a;
+    border-width: 2px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.section-icon {
+    font-size: 1.3em;
+}
+
+.section-description {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.rate-box {
+    padding: 15px 20px;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.rate-label {
+    font-size: 0.85em;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.rate-value {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #333;
+}
+
+.rate-note {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+.applicable-rate {
+    border: 2px solid #28a745;
+    background: #f0fff0;
+}
