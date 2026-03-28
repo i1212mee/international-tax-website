@@ -408,10 +408,10 @@ function renderHistoryList() {
                 <div class="item-actions">
                     <button class="item-btn bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" 
                             onclick="toggleBookmark(${item.id})" title="${isBookmarked ? 'Remove bookmark' : 'Add bookmark'}">
-                        ${isBookmarked ? '‚òÖ' : '‚òÜ'}
+                        ${isBookmarked ? '‚ò? : '‚ò?}
                     </button>
                     <button class="item-btn delete-btn" onclick="deleteHistoryItem(${item.id})" title="Delete">
-                        √ó
+                        ‚ú?
                     </button>
                 </div>
             </div>
@@ -534,8 +534,8 @@ function renderBookmarksList() {
     if (bookmarks.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="icon">‚òÜ</div>
-                <p>No bookmarks yet. Click ‚òÜ to bookmark a query.</p>
+                <div class="icon">‚≠?/div>
+                <p>No bookmarks yet. Click ‚ò?to bookmark a query.</p>
             </div>
         `;
         return;
@@ -551,7 +551,7 @@ function renderBookmarksList() {
                 </div>
                 <div class="item-actions">
                     <button class="item-btn delete-btn" onclick="deleteBookmark(${item.id})" title="Remove bookmark">
-                        √ó
+                        ‚ú?
                     </button>
                 </div>
             </div>
@@ -892,7 +892,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
     if (webResults && webResults.length > 0) {
         html += `<div class="source-section">`;
         html += `<div class="realtime-indicator">`;
-        html += `<span class="live-badge">‚óè LIVE</span>`;
+        html += `<span class="live-badge">‚ó?LIVE</span>`;
         html += `<span class="query-time">Queried at: ${queryTime}</span>`;
         html += `<span class="search-duration">Response time: ${searchDuration}ms</span>`;
         html += `</div>`;
@@ -903,7 +903,7 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
             const reliabilityBadge = result.reliability === 'high' ? 
                 '<span class="reliability-badge high">Official/Professional</span>' : 
                 '<span class="reliability-badge medium">Reference</span>';
-            const typeIcon = result.type === 'official' ? 'üèõÔ∏è' : 
+            const typeIcon = result.type === 'official' ? 'üèõÔ∏? : 
                             result.type === 'professional' ? 'üíº' : 'üìñ';
             
             html += `<div class="source-item verified">`;
@@ -924,69 +924,36 @@ function displayNationalTaxResults(countryName, countryCode, transactionType, ac
 
 // Get domestic WHT rate (non-treaty rate) for a country
 function getDomesticWHTRate(countryCode, paymentType) {
-    // Normalize payment type (handle plural forms from HTML select)
-    const paymentTypeMap = {
-        'dividends': 'dividend',
-        'interest': 'interest',
-        'royalties': 'royalty',
-        'services': 'technical',
-        'management': 'management'
-    };
-    const normalizedPaymentType = paymentTypeMap[paymentType] || paymentType;
-    
-    // Default standard rates by payment type (for countries not in the list)
-    const defaultRates = {
-        interest: { rate: '15%', note: 'Standard WHT rate for interest payments' },
-        dividend: { rate: '15%', note: 'Standard WHT rate for dividends' },
-        royalty: { rate: '15%', note: 'Standard WHT rate for royalties' },
-        technical: { rate: '15%', note: 'Standard WHT rate for technical services' },
-        management: { rate: '15%', note: 'Standard WHT rate for management services' }
-    };
-    
     const domesticRates = {
-        'SG': { interest: { rate: '15%', note: 'Singapore domestic WHT rate for interest' }, dividend: { rate: '0%', note: 'Singapore does not tax dividends at source' }, royalty: { rate: '15%', note: 'Singapore domestic WHT rate for royalties' }, technical: { rate: '15%', note: 'Singapore domestic WHT rate for technical fees' }, management: { rate: '15%', note: 'Singapore domestic WHT rate for management fees' } },
-        'HK': { interest: { rate: '0%', note: 'Hong Kong does not impose WHT on interest' }, dividend: { rate: '0%', note: 'Hong Kong does not impose WHT on dividends' }, royalty: { rate: '2.475-4.95%', note: 'Hong Kong WHT on royalties (concessionary rate for IP)' }, technical: { rate: 'N/A', note: 'Hong Kong does not impose WHT on technical services' }, management: { rate: 'N/A', note: 'Hong Kong does not impose WHT on management fees' } },
-        'MY': { interest: { rate: '15%', note: 'Malaysia domestic WHT rate for interest' }, dividend: { rate: '0%', note: 'Malaysia does not tax dividends at source' }, royalty: { rate: '10%', note: 'Malaysia domestic WHT rate for royalties' }, technical: { rate: '10%', note: 'Malaysia domestic WHT rate for technical services' }, management: { rate: '10%', note: 'Malaysia domestic WHT rate for management fees' } },
-        'CN': { interest: { rate: '20%', note: 'China domestic WHT rate for interest' }, dividend: { rate: '20%', note: 'China domestic WHT rate for dividends' }, royalty: { rate: '20%', note: 'China domestic WHT rate for royalties' }, technical: { rate: '20%', note: 'China domestic WHT rate for technical services' }, management: { rate: '20%', note: 'China domestic WHT rate for management fees' } },
-        'JP': { interest: { rate: '20.42%', note: 'Japan domestic WHT rate for interest (20% + 2.1% reconstruction tax)' }, dividend: { rate: '20%', note: 'Japan domestic WHT rate for dividends' }, royalty: { rate: '20.42%', note: 'Japan domestic WHT rate for royalties' }, technical: { rate: '20.42%', note: 'Japan domestic WHT rate for technical services' }, management: { rate: '20.42%', note: 'Japan domestic WHT rate for management fees' } },
-        'US': { interest: { rate: '30%', note: 'US domestic WHT rate for interest (non-portfolio)' }, dividend: { rate: '30%', note: 'US domestic WHT rate for dividends' }, royalty: { rate: '30%', note: 'US domestic WHT rate for royalties' }, technical: { rate: '30%', note: 'US domestic WHT rate for technical services' }, management: { rate: '30%', note: 'US domestic WHT rate for management fees' } },
-        'UK': { interest: { rate: '20%', note: 'UK domestic WHT rate for interest' }, dividend: { rate: '0%', note: 'UK does not tax dividends at source' }, royalty: { rate: '20%', note: 'UK domestic WHT rate for royalties' }, technical: { rate: '20%', note: 'UK domestic WHT rate for technical services' }, management: { rate: '20%', note: 'UK domestic WHT rate for management fees' } },
-        'DE': { interest: { rate: '0%', note: 'Germany does not impose WHT on interest' }, dividend: { rate: '25%', note: 'Germany domestic WHT rate for dividends (25% + solidarity surcharge)' }, royalty: { rate: '15%', note: 'Germany domestic WHT rate for royalties' }, technical: { rate: '15%', note: 'Germany domestic WHT rate for technical services' }, management: { rate: '15%', note: 'Germany domestic WHT rate for management fees' } },
-        'FR': { interest: { rate: '12.8%', note: 'France domestic WHT rate for interest' }, dividend: { rate: '30%', note: 'France domestic WHT rate for dividends (25% income tax + 17.2% social contributions, capped)' }, royalty: { rate: '33.33%', note: 'France domestic WHT rate for royalties' }, technical: { rate: '33.33%', note: 'France domestic WHT rate for technical services' }, management: { rate: '33.33%', note: 'France domestic WHT rate for management fees' } },
-        'AU': { interest: { rate: '30%', note: 'Australia domestic WHT rate for interest' }, dividend: { rate: '30%', note: 'Australia domestic WHT rate for dividends (unfranked)' }, royalty: { rate: '30%', note: 'Australia domestic WHT rate for royalties' }, technical: { rate: '30%', note: 'Australia domestic WHT rate for technical services' }, management: { rate: '30%', note: 'Australia domestic WHT rate for management fees' } },
-        'CA': { interest: { rate: '25%', note: 'Canada domestic WHT rate for interest' }, dividend: { rate: '25%', note: 'Canada domestic WHT rate for dividends' }, royalty: { rate: '25%', note: 'Canada domestic WHT rate for royalties' }, technical: { rate: '25%', note: 'Canada domestic WHT rate for technical services' }, management: { rate: '25%', note: 'Canada domestic WHT rate for management fees' } },
-        'IN': { interest: { rate: '20%', note: 'India domestic WHT rate for interest' }, dividend: { rate: '20%', note: 'India domestic WHT rate for dividends' }, royalty: { rate: '10%', note: 'India domestic WHT rate for royalties' }, technical: { rate: '10%', note: 'India domestic WHT rate for technical services' }, management: { rate: '10%', note: 'India domestic WHT rate for management fees' } },
-        'KR': { interest: { rate: '25%', note: 'South Korea domestic WHT rate for interest' }, dividend: { rate: '25%', note: 'South Korea domestic WHT rate for dividends' }, royalty: { rate: '25%', note: 'South Korea domestic WHT rate for royalties' }, technical: { rate: '25%', note: 'South Korea domestic WHT rate for technical services' }, management: { rate: '25%', note: 'South Korea domestic WHT rate for management fees' } },
-        'TW': { interest: { rate: '20%', note: 'Taiwan domestic WHT rate for interest' }, dividend: { rate: '21%', note: 'Taiwan domestic WHT rate for dividends' }, royalty: { rate: '20%', note: 'Taiwan domestic WHT rate for royalties' }, technical: { rate: '20%', note: 'Taiwan domestic WHT rate for technical services' }, management: { rate: '20%', note: 'Taiwan domestic WHT rate for management fees' } },
-        'TH': { interest: { rate: '15%', note: 'Thailand domestic WHT rate for interest' }, dividend: { rate: '10%', note: 'Thailand domestic WHT rate for dividends' }, royalty: { rate: '15%', note: 'Thailand domestic WHT rate for royalties' }, technical: { rate: '15%', note: 'Thailand domestic WHT rate for technical services' }, management: { rate: '15%', note: 'Thailand domestic WHT rate for management fees' } },
-        'ID': { interest: { rate: '20%', note: 'Indonesia domestic WHT rate for interest' }, dividend: { rate: '20%', note: 'Indonesia domestic WHT rate for dividends' }, royalty: { rate: '20%', note: 'Indonesia domestic WHT rate for royalties' }, technical: { rate: '20%', note: 'Indonesia domestic WHT rate for technical services' }, management: { rate: '20%', note: 'Indonesia domestic WHT rate for management fees' } },
-        'VN': { interest: { rate: '5%', note: 'Vietnam domestic WHT rate for interest' }, dividend: { rate: '5%', note: 'Vietnam domestic WHT rate for dividends' }, royalty: { rate: '10%', note: 'Vietnam domestic WHT rate for royalties' }, technical: { rate: '10%', note: 'Vietnam domestic WHT rate for technical services' }, management: { rate: '10%', note: 'Vietnam domestic WHT rate for management fees' } },
-        'PH': { interest: { rate: '25%', note: 'Philippines domestic WHT rate for interest' }, dividend: { rate: '25%', note: 'Philippines domestic WHT rate for dividends' }, royalty: { rate: '25%', note: 'Philippines domestic WHT rate for royalties' }, technical: { rate: '25%', note: 'Philippines domestic WHT rate for technical services' }, management: { rate: '25%', note: 'Philippines domestic WHT rate for management fees' } },
-        'NZ': { interest: { rate: '15%', note: 'New Zealand domestic WHT rate for interest' }, dividend: { rate: '0%', note: 'New Zealand does not tax dividends at source' }, royalty: { rate: '15%', note: 'New Zealand domestic WHT rate for royalties' }, technical: { rate: '15%', note: 'New Zealand domestic WHT rate for technical services' }, management: { rate: '15%', note: 'New Zealand domestic WHT rate for management fees' } },
-        'NL': { interest: { rate: '0%', note: 'Netherlands does not impose WHT on interest' }, dividend: { rate: '15%', note: 'Netherlands domestic WHT rate for dividends' }, royalty: { rate: '0%', note: 'Netherlands does not impose WHT on royalties' }, technical: { rate: '0%', note: 'Netherlands does not impose WHT on technical services' }, management: { rate: '0%', note: 'Netherlands does not impose WHT on management fees' } },
-        'CH': { interest: { rate: '35%', note: 'Switzerland domestic WHT rate for interest' }, dividend: { rate: '35%', note: 'Switzerland domestic WHT rate for dividends' }, royalty: { rate: '0%', note: 'Switzerland does not impose WHT on royalties' }, technical: { rate: '0%', note: 'Switzerland does not impose WHT on technical services' }, management: { rate: '0%', note: 'Switzerland does not impose WHT on management fees' } },
-        'LU': { interest: { rate: '0%', note: 'Luxembourg does not impose WHT on interest' }, dividend: { rate: '0%', note: 'Luxembourg domestic WHT rate for dividends (0% standard rate)' }, royalty: { rate: '0%', note: 'Luxembourg does not impose WHT on royalties' }, technical: { rate: '0%', note: 'Luxembourg does not impose WHT on technical services' }, management: { rate: '0%', note: 'Luxembourg does not impose WHT on management fees' } },
-        'IE': { interest: { rate: '20%', note: 'Ireland domestic WHT rate for interest' }, dividend: { rate: '25%', note: 'Ireland domestic WHT rate for dividends' }, royalty: { rate: '20%', note: 'Ireland domestic WHT rate for royalties' }, technical: { rate: '20%', note: 'Ireland domestic WHT rate for technical services' }, management: { rate: '20%', note: 'Ireland domestic WHT rate for management fees' } },
-        'MO': { interest: { rate: '0%', note: 'Macao does not impose WHT on interest' }, dividend: { rate: '0%', note: 'Macao does not impose WHT on dividends' }, royalty: { rate: '0%', note: 'Macao does not impose WHT on royalties' }, technical: { rate: '0%', note: 'Macao does not impose WHT on technical services' }, management: { rate: '0%', note: 'Macao does not impose WHT on management fees' } }
+        'SG': { interest: '15%', dividend: '0%', royalty: '15%', technical: '15%', management: '15%' },
+        'HK': { interest: '0%', dividend: '0%', royalty: '2.475-4.95%', technical: 'N/A', management: 'N/A' },
+        'MY': { interest: '15%', dividend: '0%', royalty: '10%', technical: '10%', management: '10%' },
+        'CN': { interest: '20%', dividend: '20%', royalty: '20%', technical: '20%', management: '20%' },
+        'JP': { interest: '20.42%', dividend: '20%', royalty: '20.42%', technical: '20.42%', management: '20.42%' },
+        'US': { interest: '30%', dividend: '30%', royalty: '30%', technical: '30%', management: '30%' },
+        'UK': { interest: '20%', dividend: '0%', royalty: '20%', technical: '20%', management: '20%' },
+        'DE': { interest: '25%', dividend: '25%', royalty: '15%', technical: '15%', management: '15%' },
+        'FR': { interest: '12.8%', dividend: '30%', royalty: '33.33%', technical: '33.33%', management: '33.33%' },
+        'AU': { interest: '30%', dividend: '30%', royalty: '30%', technical: '30%', management: '30%' },
+        'CA': { interest: '25%', dividend: '25%', royalty: '25%', technical: '25%', management: '25%' },
+        'IN': { interest: '20%', dividend: '20%', royalty: '10%', technical: '10%', management: '10%' },
+        'KR': { interest: '25%', dividend: '25%', royalty: '25%', technical: '25%', management: '25%' },
+        'TW': { interest: '20%', dividend: '21%', royalty: '20%', technical: '20%', management: '20%' },
+        'TH': { interest: '15%', dividend: '10%', royalty: '15%', technical: '15%', management: '15%' },
+        'ID': { interest: '20%', dividend: '20%', royalty: '20%', technical: '20%', management: '20%' },
+        'VN': { interest: '5%', dividend: '5%', royalty: '10%', technical: '10%', management: '10%' },
+        'PH': { interest: '25%', dividend: '25%', royalty: '25%', technical: '25%', management: '25%' },
+        'NZ': { interest: '15%', dividend: '0%', royalty: '15%', technical: '15%', management: '15%' },
+        'NL': { interest: '15%', dividend: '15%', royalty: '15%', technical: '15%', management: '15%' },
+        'CH': { interest: '35%', dividend: '35%', royalty: '35%', technical: '35%', management: '35%' },
+        'LU': { interest: '0%', dividend: '0%', royalty: '0%', technical: '0%', management: '0%' },
+        'IE': { interest: '20%', dividend: '25%', royalty: '20%', technical: '20%', management: '20%' },
+        'MO': { interest: '0%', dividend: '0%', royalty: '0%', technical: '0%', management: '0%' }
     };
-    
-    // Normalize country code (uppercase)
-    const normalizedCode = (countryCode || '').toUpperCase().trim();
-    
-    // Check if we have specific data for this country
-    if (domesticRates[normalizedCode] && domesticRates[normalizedCode][normalizedPaymentType]) {
-        return domesticRates[normalizedCode][normalizedPaymentType];
+    if (domesticRates[countryCode] && domesticRates[countryCode][paymentType]) {
+        return domesticRates[countryCode][paymentType];
     }
-    
-    // Return default rate with note
-    if (defaultRates[normalizedPaymentType]) {
-        return {
-            rate: defaultRates[normalizedPaymentType].rate,
-            note: 'Estimated ' + defaultRates[normalizedPaymentType].note + ' - verify with local tax authority'
-        };
-    }
-    
-    return { rate: '15%', note: 'Standard WHT rate - verify with local tax authority' };
+    return 'Standard rate applies';
 }
 
 // Query Withholding Tax Rate
@@ -1092,7 +1059,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Section 1: Domestic WHT Rate (Non-Treaty)
     html += '<div class="wht-section domestic-section" style="margin: 15px 0; padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800;">';
-    html += '<div class="section-header" style="font-weight: bold; color: #e65100; margin-bottom: 8px;"><span>üèõÔ∏è Section 1: Domestic WHT Rate (Non-Treaty)</span></div>';
+    html += '<div class="section-header" style="font-weight: bold; color: #e65100; margin-bottom: 8px;"><span>üèõÔ∏?Section 1: Domestic WHT Rate (Non-Treaty)</span></div>';
     html += '<div class="section-desc" style="font-size: 0.85em; color: #666; margin-bottom: 10px;">WHT rate under ' + payerName + ' domestic tax law, without considering any Double Tax Treaty</div>';
     html += '<div class="rate-display" style="font-size: 1.8em; font-weight: bold; color: #e65100;">' + domesticRateValue + '</div>';
     html += '<div class="rate-label" style="font-size: 0.85em; color: #666;">' + domesticRateNote + '</div>';
@@ -1115,7 +1082,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Applicable Rate
     html += '<div class="wht-section applicable-section" style="margin: 15px 0; padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">';
-    html += '<div class="section-header" style="font-weight: bold; color: #2e7d32; margin-bottom: 8px;"><span>‚úì Applicable Rate</span></div>';
+    html += '<div class="section-header" style="font-weight: bold; color: #2e7d32; margin-bottom: 8px;"><span>‚ú?Applicable Rate</span></div>';
     html += '<div class="rate-display" style="font-size: 2em; font-weight: bold; color: #2e7d32;">' + applicableRate + '</div>';
     html += '<div class="rate-label" style="font-size: 0.85em; color: #666;">' + applicableNote + '</div>';
     html += '</div>';
@@ -1129,7 +1096,7 @@ function displayWithholdingTaxResults(payerName, payerCode, payeeName, payeeCode
     
     // Live indicator
     html += '<div class="live-indicator" style="margin-top: 15px; padding: 10px; background: #e8f5e9; border-radius: 5px; font-size: 0.85em;">';
-    html += '<span class="live-badge">‚óè LIVE</span> Queried at: ' + queryTime;
+    html += '<span class="live-badge">‚ó?LIVE</span> Queried at: ' + queryTime;
     if (searchDuration) html += ' | Response time: ' + searchDuration + 'ms';
     html += '</div>';
     
