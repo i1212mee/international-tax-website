@@ -689,10 +689,12 @@ const TAX_DATA = {
             name: "Indonesia",
             vat: {
                 tiers: [
-                    { rate: "11%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
+                    { rate: "12%", type: "standard", label: "Standard Rate (Nominal)", note: "Effective 11% for most goods/services via DPP Nilai Lain" },
+                    { rate: "11%", type: "effective", label: "Effective Rate", note: "Most goods and services (DPP Nilai Lain calculation)" },
+                    { rate: "12%", type: "luxury", label: "Luxury Goods", note: "Actual 12% applies" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "PPN - Value Added Tax"
+                note: "PPN - Value Added Tax (Jan 2025: Nominal 12%, Effective 11% for most)"
             },
             incomeTax: {
                 tiers: [
@@ -1304,3 +1306,5 @@ function getDefaultWHTRate(paymentType) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { TAX_DATA, getDefaultWHTRate };
 }
+
+
