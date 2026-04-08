@@ -1147,7 +1147,7 @@ const TAX_DATA = {
         "MY_JP_interest": "10%",
         "MY_JP_royalties": "8%",
         "MY_SG_dividends": "0%",
-        "MY_SG_interest": "15%",
+        "MY_SG_interest": "10%",
         "MY_SG_royalties": "8%",
         "MY_CN_dividends": "0%",
         "MY_CN_interest": "10%",
