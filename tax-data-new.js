@@ -1,4 +1,4 @@
-﻿// Basic tax rate data for countries
+// Basic tax rate data for countries
 // This serves as a baseline - real-time data will be fetched from web sources
 
 const TAX_DATA = {
@@ -39,11 +39,11 @@ const TAX_DATA = {
             },
             incomeTax: {
                 tiers: [
-                    { rate: "25%", type: "corporate", label: "Corporate Tax", note: "For profits over 拢250,000" },
-                    { rate: "19%", type: "corporate-small", label: "Small Profits Rate", note: "For profits under 拢50,000" },
-                    { rate: "20%", type: "individual-basic", label: "Basic Rate", note: "拢12,571-拢50,270" },
-                    { rate: "40%", type: "individual-higher", label: "Higher Rate", note: "拢50,271-拢125,140" },
-                    { rate: "45%", type: "individual-additional", label: "Additional Rate", note: "Over 拢125,140" }
+                    { rate: "25%", type: "corporate", label: "Corporate Tax", note: "For profits over £250,000" },
+                    { rate: "19%", type: "corporate-small", label: "Small Profits Rate", note: "For profits under £50,000" },
+                    { rate: "20%", type: "individual-basic", label: "Basic Rate", note: "£12,571-£50,270" },
+                    { rate: "40%", type: "individual-higher", label: "Higher Rate", note: "£50,271-£125,140" },
+                    { rate: "45%", type: "individual-additional", label: "Additional Rate", note: "Over £125,140" }
                 ]
             },
             businessTax: {
@@ -82,12 +82,12 @@ const TAX_DATA = {
                     { rate: "5.5%", type: "reduced", label: "Reduced Rate", note: "Food, books, water" },
                     { rate: "2.1%", type: "super-reduced", label: "Super Reduced Rate", note: "Medicines, newspapers" }
                 ],
-                note: "TVA - Taxe sur la Valeur Ajout茅e"
+                note: "TVA - Taxe sur la Valeur Ajoutée"
             },
             incomeTax: {
                 tiers: [
                     { rate: "25%", type: "corporate", label: "Corporate Tax", note: "Standard rate" },
-                    { rate: "15%", type: "corporate-small", label: "Small Business Rate", note: "For profits up to 鈧?2,500" },
+                    { rate: "15%", type: "corporate-small", label: "Small Business Rate", note: "For profits up to �?2,500" },
                     { rate: "0-45%", type: "individual", label: "Individual Tax", note: "Progressive rates" }
                 ]
             },
@@ -107,7 +107,7 @@ const TAX_DATA = {
                     { rate: "3%", type: "small", label: "Small-scale Taxpayer", note: "Simplified rate for small taxpayers" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "澧炲€肩◣ - Value Added Tax"
+                note: "增值税 - Value Added Tax"
             },
             incomeTax: {
                 tiers: [
@@ -184,7 +184,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
                     { rate: "8%", type: "reduced", label: "Reduced Rate", note: "Food, beverages, newspapers" }
                 ],
-                note: "娑堣不绋?- Consumption Tax"
+                note: "消費�?- Consumption Tax"
             },
             incomeTax: {
                 tiers: [
@@ -302,7 +302,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "攵€臧€臧€旃橃劯 - Value Added Tax"
+                note: "부가가치세 - Value Added Tax"
             },
             incomeTax: {
                 tiers: [
@@ -368,7 +368,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "reduced", label: "Reduced Rate", note: "Food, children's goods, medical" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "袧袛小 - NDS"
+                note: "НДС - NDS"
             },
             incomeTax: {
                 tiers: [
@@ -464,7 +464,7 @@ const TAX_DATA = {
             incomeTax: {
                 tiers: [
                     { rate: "25.8%", type: "corporate", label: "Corporate Tax", note: "Standard rate" },
-                    { rate: "19%", type: "corporate-small", label: "Lower Rate", note: "For profits up to 鈧?00,000" },
+                    { rate: "19%", type: "corporate-small", label: "Lower Rate", note: "For profits up to �?00,000" },
                     { rate: "9-49.5%", type: "individual", label: "Individual Tax", note: "Progressive rates" }
                 ]
             },
@@ -483,7 +483,7 @@ const TAX_DATA = {
                     { rate: "6%", type: "low", label: "Low Rate", note: "Books, newspapers, passenger transport" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "Moms - Merv盲rdesskatt"
+                note: "Moms - Mervärdesskatt"
             },
             incomeTax: {
                 tiers: [
@@ -554,7 +554,7 @@ const TAX_DATA = {
                     { rate: "4%", type: "super-reduced", label: "Super Reduced", note: "Basic necessities, books" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports, intra-EU" }
                 ],
-                note: "IVA - Impuesto sobre el Valor A帽adido"
+                note: "IVA - Impuesto sobre el Valor Añadido"
             },
             incomeTax: {
                 tiers: [
@@ -578,12 +578,12 @@ const TAX_DATA = {
                     { rate: "5%", type: "low", label: "Low Rate", note: "Books, food, medical equipment" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports, intra-EU" }
                 ],
-                note: "PTU - Podatek od towar贸w i us艂ug"
+                note: "PTU - Podatek od towarów i usług"
             },
             incomeTax: {
                 tiers: [
                     { rate: "19%", type: "corporate", label: "Corporate Tax (CIT)", note: "Standard rate" },
-                    { rate: "9%", type: "corporate-small", label: "Small Business Rate", note: "Revenue < 鈧?M" },
+                    { rate: "9%", type: "corporate-small", label: "Small Business Rate", note: "Revenue < �?M" },
                     { rate: "12-32%", type: "individual", label: "Individual Tax (PIT)", note: "Progressive rates" }
                 ]
             },
@@ -689,10 +689,12 @@ const TAX_DATA = {
             name: "Indonesia",
             vat: {
                 tiers: [
-                    { rate: "11%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
+                    { rate: "12%", type: "standard", label: "Standard Rate (Nominal)", note: "Effective 11% for most goods/services via DPP Nilai Lain" },
+                    { rate: "11%", type: "effective", label: "Effective Rate", note: "Most goods and services (DPP Nilai Lain calculation)" },
+                    { rate: "12%", type: "luxury", label: "Luxury Goods", note: "Actual 12% applies" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "PPN - Value Added Tax"
+                note: "PPN - Value Added Tax (Jan 2025: Nominal 12%, Effective 11% for most)"
             },
             incomeTax: {
                 tiers: [
@@ -1145,7 +1147,7 @@ const TAX_DATA = {
         "MY_JP_interest": "10%",
         "MY_JP_royalties": "8%",
         "MY_SG_dividends": "0%",
-        "MY_SG_interest": "15%",
+        "MY_SG_interest": "10%",
         "MY_SG_royalties": "8%",
         "MY_CN_dividends": "0%",
         "MY_CN_interest": "10%",
@@ -1284,97 +1286,692 @@ const TAX_DATA = {
         "MO_CN_royalties": "10%",
         "MO_PT_dividends": "5%",
         "MO_PT_interest": "10%",
-        "MO_PT_royalties": "5%"
+        "MO_PT_royalties": "10%"
+// Domestic Withholding Tax Rates (Non-Treaty)
+const DOMESTIC_WHT_DATA = {
+    "CN": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "HK": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "4.95%"
+    },
+    "SG": {
+        dividend: "0%",
+        interest: "15%",
+        royalty: "10%"
+    },
+    "MY": {
+        dividend: "0%",
+        interest: "15%",
+        royalty: "10%"
+    },
+    "ID": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "TH": {
+        dividend: "10%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "VN": {
+        dividend: "0%",
+        interest: "5%",
+        royalty: "10%"
+    },
+    "PH": {
+        dividend: "15%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "JP": {
+        dividend: "20.42%",
+        interest: "15.315%",
+        royalty: "20%"
+    },
+    "KR": {
+        dividend: "22%",
+        interest: "22%",
+        royalty: "22%"
+    },
+    "IN": {
+        dividend: "10%",
+        interest: "20%",
+        royalty: "10%"
+    },
+    "AU": {
+        dividend: "30%",
+        interest: "10%",
+        royalty: "30%"
+    },
+    "NZ": {
+        dividend: "30%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "GB": {
+        dividend: "0%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "DE": {
+        dividend: "25%",
+        interest: "0%",
+        royalty: "15%"
+    },
+    "FR": {
+        dividend: "30%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "IT": {
+        dividend: "26%",
+        interest: "26%",
+        royalty: "30%"
+    },
+    "ES": {
+        dividend: "19%",
+        interest: "19%",
+        royalty: "24%"
+    },
+    "NL": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "CH": {
+        dividend: "35%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SE": {
+        dividend: "30%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "NO": {
+        dividend: "25%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "DK": {
+        dividend: "27%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "FI": {
+        dividend: "30%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "BE": {
+        dividend: "30%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "AT": {
+        dividend: "27.5%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PL": {
+        dividend: "19%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "CZ": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "HU": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "RO": {
+        dividend: "5%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "BG": {
+        dividend: "5%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "HR": {
+        dividend: "10%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SI": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SK": {
+        dividend: "7%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "LT": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "LV": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "EE": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "IE": {
+        dividend: "25%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PT": {
+        dividend: "28%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "GR": {
+        dividend: "5%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "CY": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "MT": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "LU": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "IS": {
+        dividend: "18%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "LI": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "MC": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "AD": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SM": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "VA": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "US": {
+        dividend: "30%",
+        interest: "30%",
+        royalty: "30%"
+    },
+    "CA": {
+        dividend: "25%",
+        interest: "25%",
+        royalty: "25%"
+    },
+    "MX": {
+        dividend: "10%",
+        interest: "4.9%",
+        royalty: "35%"
+    },
+    "BR": {
+        dividend: "0%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "AR": {
+        dividend: "7%",
+        interest: "35%",
+        royalty: "28%"
+    },
+    "CL": {
+        dividend: "35%",
+        interest: "35%",
+        royalty: "35%"
+    },
+    "CO": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PE": {
+        dividend: "5%",
+        interest: "30%",
+        royalty: "30%"
+    },
+    "VE": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "ZA": {
+        dividend: "20%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "EG": {
+        dividend: "0%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "NG": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "KE": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "TZ": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "UG": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "GH": {
+        dividend: "8%",
+        interest: "8%",
+        royalty: "8%"
+    },
+    "MA": {
+        dividend: "15%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "TN": {
+        dividend: "0%",
+        interest: "20%",
+        royalty: "0%"
+    },
+    "DZ": {
+        dividend: "15%",
+        interest: "10%",
+        royalty: "30%"
+    },
+    "LY": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SD": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "ET": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SO": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "CD": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "AO": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "MZ": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "ZM": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "ZW": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "BW": {
+        dividend: "7.5%",
+        interest: "10%",
+        royalty: "15%"
+    },
+    "NA": {
+        dividend: "20%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "SZ": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "LS": {
+        dividend: "25%",
+        interest: "25%",
+        royalty: "25%"
+    },
+    "RU": {
+        dividend: "15%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "UA": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "BY": {
+        dividend: "13%",
+        interest: "13%",
+        royalty: "13%"
+    },
+    "KZ": {
+        dividend: "15%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "UZ": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "20%"
+    },
+    "AZ": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "14%"
+    },
+    "AM": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "GE": {
+        dividend: "5%",
+        interest: "5%",
+        royalty: "5%"
+    },
+    "MD": {
+        dividend: "6%",
+        interest: "12%",
+        royalty: "12%"
+    },
+    "KG": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "TJ": {
+        dividend: "12%",
+        interest: "12%",
+        royalty: "15%"
+    },
+    "TM": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "20%"
+    },
+    "MN": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "KP": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "TR": {
+        dividend: "15%",
+        interest: "0%",
+        royalty: "20%"
+    },
+    "SA": {
+        dividend: "5%",
+        interest: "5%",
+        royalty: "15%"
+    },
+    "AE": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "QA": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "5%"
+    },
+    "KW": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "BH": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "OM": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "YE": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "IQ": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "SY": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "LB": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "JO": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PS": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "IL": {
+        dividend: "25%",
+        interest: "25%",
+        royalty: "25%"
+    },
+    "IR": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PK": {
+        dividend: "15%",
+        interest: "10%",
+        royalty: "15%"
+    },
+    "AF": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "BD": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "LK": {
+        dividend: "14%",
+        interest: "14%",
+        royalty: "14%"
+    },
+    "NP": {
+        dividend: "5%",
+        interest: "5%",
+        royalty: "15%"
+    },
+    "BT": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "MV": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "MM": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "KH": {
+        dividend: "14%",
+        interest: "14%",
+        royalty: "14%"
+    },
+    "LA": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "BN": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "TL": {
+        dividend: "10%",
+        interest: "10%",
+        royalty: "10%"
+    },
+    "PG": {
+        dividend: "17%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "FJ": {
+        dividend: "20%",
+        interest: "20%",
+        royalty: "20%"
+    },
+    "SB": {
+        dividend: "30%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "VU": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "NC": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PF": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "WS": {
+        dividend: "15%",
+        interest: "15%",
+        royalty: "15%"
+    },
+    "TO": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "KI": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "TV": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "NR": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "PW": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "MH": {
+        dividend: "0%",
+        interest: "0%",
+        royalty: "0%"
+    },
+    "FM": {
+        dividend: "30%",
+        interest: "30%",
+        royalty: "30%"
     }
-};,
-
-    // Domestic Withholding Tax Rates (Non-Treaty Rates)
-    // These are the rates that apply when no Double Taxation Treaty exists
-    domesticWHT: {
-        // China (CN)
-        "CN_interest": { rate: "20%", note: "Standard rate for interest paid to non-residents" },
-        "CN_dividends": { rate: "10%", note: "Standard rate for dividends paid to non-residents" },
-        "CN_royalties": { rate: "10%", note: "Standard rate for royalties paid to non-residents" },
-        "CN_services": { rate: "15%", note: "Technical service fees paid to non-residents" },
-        "CN_management": { rate: "15%", note: "Management fees paid to non-residents" },
-
-        // Hong Kong (HK)
-        "HK_interest": { rate: "0%", note: "Hong Kong does not impose WHT on interest" },
-        "HK_dividends": { rate: "0%", note: "Hong Kong does not impose WHT on dividends" },
-        "HK_royalties": { rate: "2.475-4.95%", note: "Royalties are subject to withholding under certain conditions" },
-        "HK_services": { rate: "0%", note: "No WHT on services in Hong Kong" },
-        "HK_management": { rate: "0%", note: "No WHT on management fees in Hong Kong" },
-
-        // Singapore (SG)
-        "SG_interest": { rate: "15%", note: "Standard rate for interest paid to non-residents" },
-        "SG_dividends": { rate: "0%", note: "Singapore does not impose WHT on dividends" },
-        "SG_royalties": { rate: "10%", note: "Standard rate for royalties paid to non-residents" },
-        "SG_services": { rate: "17%", note: "Technical services provided by non-residents" },
-        "SG_management": { rate: "17%", note: "Management fees paid to non-residents" },
-
-        // United States (US)
-        "US_interest": { rate: "30%", note: "Standard rate for FDAP income including interest" },
-        "US_dividends": { rate: "30%", note: "Standard rate for dividends paid to non-residents" },
-        "US_royalties": { rate: "30%", note: "Standard rate for royalties paid to non-residents" },
-        "US_services": { rate: "30%", note: "Technical services performed outside US" },
-        "US_management": { rate: "30%", note: "Management fees paid to non-residents" },
-
-        // United Kingdom (UK/GB)
-        "GB_interest": { rate: "20%", note: "Standard rate for interest paid to non-residents" },
-        "GB_dividends": { rate: "0%", note: "No WHT on dividends in the UK" },
-        "GB_royalties": { rate: "20%", note: "Standard rate for royalties paid to non-residents" },
-        "GB_services": { rate: "20%", note: "Technical services paid to non-residents" },
-        "GB_management": { rate: "20%", note: "Management fees paid to non-residents" },
-
-        // Japan (JP)
-        "JP_interest": { rate: "20.42%", note: "Standard rate including local income tax" },
-        "JP_dividends": { rate: "20.42%", note: "Standard rate for dividends paid to non-residents" },
-        "JP_royalties": { rate: "20.42%", note: "Standard rate for royalties paid to non-residents" },
-        "JP_services": { rate: "20.42%", note: "Technical services paid to non-residents" },
-        "JP_management": { rate: "20.42%", note: "Management fees paid to non-residents" },
-
-        // South Korea (KR)
-        "KR_interest": { rate: "25%", note: "Standard rate for interest paid to non-residents" },
-        "KR_dividends": { rate: "25%", note: "Standard rate for dividends paid to non-residents" },
-        "KR_royalties": { rate: "25%", note: "Standard rate for royalties paid to non-residents" },
-        "KR_services": { rate: "25%", note: "Technical services paid to non-residents" },
-        "KR_management": { rate: "25%", note: "Management fees paid to non-residents" },
-
-        // Malaysia (MY)
-        "MY_interest": { rate: "15%", note: "Standard rate for interest paid to non-residents" },
-        "MY_dividends": { rate: "0%", note: "Malaysia does not impose WHT on dividends" },
-        "MY_royalties": { rate: "10%", note: "Standard rate for royalties paid to non-residents" },
-        "MY_services": { rate: "10%", note: "Technical services paid to non-residents" },
-        "MY_management": { rate: "10%", note: "Management fees paid to non-residents" },
-
-        // Australia (AU)
-        "AU_interest": { rate: "10%", note: "Standard rate for interest paid to non-residents" },
-        "AU_dividends": { rate: "30%", note: "Unfranked dividends paid to non-residents" },
-        "AU_royalties": { rate: "30%", note: "Standard rate for royalties paid to non-residents" },
-        "AU_services": { rate: "30%", note: "Technical services paid to non-residents" },
-        "AU_management": { rate: "30%", note: "Management fees paid to non-residents" },
-
-        // Germany (DE)
-        "DE_interest": { rate: "0%", note: "No WHT on interest under domestic law" },
-        "DE_dividends": { rate: "25%", note: "Standard rate plus solidarity surcharge (5.5%)" },
-        "DE_royalties": { rate: "15%", note: "Standard rate for royalties paid to non-residents" },
-        "DE_services": { rate: "15%", note: "Technical services paid to non-residents" },
-        "DE_management": { rate: "15%", note: "Management fees paid to non-residents" },
-
-        // France (FR)
-        "FR_interest": { rate: "0%", note: "No WHT on interest under domestic law" },
-        "FR_dividends": { rate: "30%", note: "Standard rate for dividends paid to non-residents" },
-        "FR_royalties": { rate: "33.33%", note: "Standard rate for royalties paid to non-residents" },
-        "FR_services": { rate: "15%", note: "Technical services paid to non-residents" },
-        "FR_management": { rate: "15%", note: "Management fees paid to non-residents" },
-
-        // Netherlands (NL)
-        "NL_interest": { rate: "0%", note: "No WHT on interest under domestic law" },
-        "NL_dividends": { rate: "15%", note: "Standard rate for dividends paid to non-residents" },
-        "NL_royalties": { rate: "0%", note: "No WHT on royalties under domestic law" },
-        "NL_services": { rate: "0%", note: "No WHT on services under domestic law" },
-        "NL_management": { rate: "0%", note: "No WHT on management fees under domestic law" }
+};
     }
+};
 
 // Function to get default WHT rate when no treaty exists
 function getDefaultWHTRate(paymentType) {
@@ -1392,3 +1989,5 @@ function getDefaultWHTRate(paymentType) {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { TAX_DATA, getDefaultWHTRate };
 }
+
+

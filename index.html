@@ -14,6 +14,46 @@
         </header>
 
         <main>
+            <!-- Welcome/Guide Section -->
+            <section id="welcome-guide" class="welcome-section">
+                <h2>Welcome to International Tax Rate Query System</h2>
+                <p class="welcome-description">Please select your transaction type to get started:</p>
+                
+                <div class="guide-cards">
+                    <div class="guide-card" id="guide-domestic">
+                        <div class="guide-icon">🏠</div>
+                        <h3>Domestic Transaction</h3>
+                        <p>Query tax rates for transactions within a single country/region</p>
+                        <ul class="guide-features">
+                            <li>VAT / GST / SST rates</li>
+                            <li>Corporate Income Tax</li>
+                            <li>Personal Income Tax</li>
+                            <li>Business Tax</li>
+                            <li>Domestic Withholding Tax</li>
+                        </ul>
+                        <button class="btn btn-primary guide-btn" data-target="national-tax">Query Domestic Tax Rates</button>
+                    </div>
+                    
+                    <div class="guide-card" id="guide-crossborder">
+                        <div class="guide-icon">🌍</div>
+                        <h3>Cross-Border Transaction</h3>
+                        <p>Query withholding tax rates for international transactions</p>
+                        <ul class="guide-features">
+                            <li>Withholding Tax (WHT) rates</li>
+                            <li>Double Tax Treaty rates</li>
+                            <li>Domestic WHT vs Treaty comparison</li>
+                            <li>Multi-country batch comparison</li>
+                            <li>Payer ↔ Payee direction analysis</li>
+                        </ul>
+                        <button class="btn btn-primary guide-btn" data-target="withholding-tax">Query Withholding Tax Rates</button>
+                    </div>
+                </div>
+                
+                <div class="guide-note">
+                    <strong>💡 Tip:</strong> You can always switch between sections using the buttons above, or access both sections directly from the main page.
+                </div>
+            </section>
+
             <!-- History and Bookmarks Section -->
             <div class="history-bookmarks-bar">
                 <button class="toggle-btn" id="toggle-history">
@@ -66,6 +106,19 @@
                                 <option value="turnover-tax">VAT/GST/SST (Turnover Tax)</option>
                                 <option value="income-tax">Income Tax</option>
                                 <option value="business-tax">Business Tax</option>
+                                <option value="domestic-wht">Domestic Withholding Tax</option>
+                            </select>
+                        </div>
+
+                        <!-- Domestic WHT Payment Type (hidden by default) -->
+                        <div class="form-group" id="domestic-wht-type-group" style="display: none;">
+                            <label for="domestic-wht-type">Domestic WHT Payment Type:</label>
+                            <select id="domestic-wht-type" class="form-control">
+                                <option value="">-- Select Type --</option>
+                                <option value="dividends">Dividends</option>
+                                <option value="interest">Interest</option>
+                                <option value="royalties">Royalties</option>
+                                <option value="services">Technical Services</option>
                             </select>
                         </div>
 

@@ -1,4 +1,4 @@
-﻿// Basic tax rate data for countries
+// Basic tax rate data for countries
 // This serves as a baseline - real-time data will be fetched from web sources
 
 const TAX_DATA = {
@@ -39,11 +39,11 @@ const TAX_DATA = {
             },
             incomeTax: {
                 tiers: [
-                    { rate: "25%", type: "corporate", label: "Corporate Tax", note: "For profits over 拢250,000" },
-                    { rate: "19%", type: "corporate-small", label: "Small Profits Rate", note: "For profits under 拢50,000" },
-                    { rate: "20%", type: "individual-basic", label: "Basic Rate", note: "拢12,571-拢50,270" },
-                    { rate: "40%", type: "individual-higher", label: "Higher Rate", note: "拢50,271-拢125,140" },
-                    { rate: "45%", type: "individual-additional", label: "Additional Rate", note: "Over 拢125,140" }
+                    { rate: "25%", type: "corporate", label: "Corporate Tax", note: "For profits over £250,000" },
+                    { rate: "19%", type: "corporate-small", label: "Small Profits Rate", note: "For profits under £50,000" },
+                    { rate: "20%", type: "individual-basic", label: "Basic Rate", note: "£12,571-£50,270" },
+                    { rate: "40%", type: "individual-higher", label: "Higher Rate", note: "£50,271-£125,140" },
+                    { rate: "45%", type: "individual-additional", label: "Additional Rate", note: "Over £125,140" }
                 ]
             },
             businessTax: {
@@ -82,12 +82,12 @@ const TAX_DATA = {
                     { rate: "5.5%", type: "reduced", label: "Reduced Rate", note: "Food, books, water" },
                     { rate: "2.1%", type: "super-reduced", label: "Super Reduced Rate", note: "Medicines, newspapers" }
                 ],
-                note: "TVA - Taxe sur la Valeur Ajout茅e"
+                note: "TVA - Taxe sur la Valeur Ajoutée"
             },
             incomeTax: {
                 tiers: [
                     { rate: "25%", type: "corporate", label: "Corporate Tax", note: "Standard rate" },
-                    { rate: "15%", type: "corporate-small", label: "Small Business Rate", note: "For profits up to 鈧?2,500" },
+                    { rate: "15%", type: "corporate-small", label: "Small Business Rate", note: "For profits up to �?2,500" },
                     { rate: "0-45%", type: "individual", label: "Individual Tax", note: "Progressive rates" }
                 ]
             },
@@ -107,7 +107,7 @@ const TAX_DATA = {
                     { rate: "3%", type: "small", label: "Small-scale Taxpayer", note: "Simplified rate for small taxpayers" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "澧炲€肩◣ - Value Added Tax"
+                note: "增值税 - Value Added Tax"
             },
             incomeTax: {
                 tiers: [
@@ -184,7 +184,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
                     { rate: "8%", type: "reduced", label: "Reduced Rate", note: "Food, beverages, newspapers" }
                 ],
-                note: "娑堣不绋?- Consumption Tax"
+                note: "消費�?- Consumption Tax"
             },
             incomeTax: {
                 tiers: [
@@ -302,7 +302,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "standard", label: "Standard Rate", note: "Most goods and services" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "攵€臧€臧€旃橃劯 - Value Added Tax"
+                note: "부가가치세 - Value Added Tax"
             },
             incomeTax: {
                 tiers: [
@@ -368,7 +368,7 @@ const TAX_DATA = {
                     { rate: "10%", type: "reduced", label: "Reduced Rate", note: "Food, children's goods, medical" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "袧袛小 - NDS"
+                note: "НДС - NDS"
             },
             incomeTax: {
                 tiers: [
@@ -464,7 +464,7 @@ const TAX_DATA = {
             incomeTax: {
                 tiers: [
                     { rate: "25.8%", type: "corporate", label: "Corporate Tax", note: "Standard rate" },
-                    { rate: "19%", type: "corporate-small", label: "Lower Rate", note: "For profits up to 鈧?00,000" },
+                    { rate: "19%", type: "corporate-small", label: "Lower Rate", note: "For profits up to �?00,000" },
                     { rate: "9-49.5%", type: "individual", label: "Individual Tax", note: "Progressive rates" }
                 ]
             },
@@ -483,7 +483,7 @@ const TAX_DATA = {
                     { rate: "6%", type: "low", label: "Low Rate", note: "Books, newspapers, passenger transport" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports" }
                 ],
-                note: "Moms - Merv盲rdesskatt"
+                note: "Moms - Mervärdesskatt"
             },
             incomeTax: {
                 tiers: [
@@ -554,7 +554,7 @@ const TAX_DATA = {
                     { rate: "4%", type: "super-reduced", label: "Super Reduced", note: "Basic necessities, books" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports, intra-EU" }
                 ],
-                note: "IVA - Impuesto sobre el Valor A帽adido"
+                note: "IVA - Impuesto sobre el Valor Añadido"
             },
             incomeTax: {
                 tiers: [
@@ -578,12 +578,12 @@ const TAX_DATA = {
                     { rate: "5%", type: "low", label: "Low Rate", note: "Books, food, medical equipment" },
                     { rate: "0%", type: "zero", label: "Zero Rate", note: "Exports, intra-EU" }
                 ],
-                note: "PTU - Podatek od towar贸w i us艂ug"
+                note: "PTU - Podatek od towarów i usług"
             },
             incomeTax: {
                 tiers: [
                     { rate: "19%", type: "corporate", label: "Corporate Tax (CIT)", note: "Standard rate" },
-                    { rate: "9%", type: "corporate-small", label: "Small Business Rate", note: "Revenue < 鈧?M" },
+                    { rate: "9%", type: "corporate-small", label: "Small Business Rate", note: "Revenue < �?M" },
                     { rate: "12-32%", type: "individual", label: "Individual Tax (PIT)", note: "Progressive rates" }
                 ]
             },
@@ -1286,7 +1286,7 @@ const TAX_DATA = {
         "MO_CN_royalties": "10%",
         "MO_PT_dividends": "5%",
         "MO_PT_interest": "10%",
-        "MO_PT_royalties": "5%"
+        "MO_PT_royalties": "10%"
     }
 };
 
